@@ -1,15 +1,12 @@
 package entity
 
 import (
-	"errors"
 	"fmt"
 	re "regexp"
 )
 
 var (
-	segmentNameRegEx             *re.Regexp = nil
-	ErrInvalidSegmentNamePattern            = errors.New("ivalid segment pattern")
-	ErrInvalidSegmentNameLenght             = errors.New("ivalid segment lenght")
+	segmentNameRegEx *re.Regexp = nil
 )
 
 const (
