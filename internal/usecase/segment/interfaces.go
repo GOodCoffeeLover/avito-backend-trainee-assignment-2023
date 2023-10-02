@@ -1,12 +1,16 @@
 package segment
 
-import "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/entity"
+import (
+	"context"
 
-type SegmentService interface {
-	Create(*entity.Segment) error
-	Delete(entity.SegmentName) error
+	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/entity"
+)
+
+type SegmentStorage interface {
+	Create(context.Context, *entity.Segment) error
+	Delete(context.Context, entity.SegmentName) error
 }
 
-type UserService interface {
-	UnassingnSegmentAllUsers(entity.SegmentName) error
+type UserStorage interface {
+	UnassingnSegmentAllUsers(context.Context, entity.SegmentName) error
 }

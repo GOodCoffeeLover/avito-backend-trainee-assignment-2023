@@ -4,29 +4,24 @@ type UserID uint
 
 type User struct {
 	id       UserID
-	segments map[SegmentName]Segment
+	segments []SegmentName
 }
 
 func NewUser(id UserID) (*User, error) {
 	return &User{
 		id:       id,
-		segments: make(map[SegmentName]Segment),
+		segments: make([]SegmentName, 0),
 	}, nil
 }
 
-func (u *User) AssignSegments(segments ...Segment) {
-	for _, segment := range segments {
-		s := segment
-		u.segments[s.name] = s
-	}
+func (u *User) AssignSegments(segments ...SegmentName) {
+	u.segments = append(u.segments, segments...)
 }
 
-func (u *User) ListAssignedSegments() []Segment {
-	segments := []Segment{}
-	for _, segment := range u.segments {
-		segments = append(segments, segment)
-	}
-	return segments
+func (u *User) ListAssignedSegments() []SegmentName {
+	res := make([]SegmentName, len(u.segments))
+	copy(res, u.segments)
+	return res
 }
 
 func (u *User) ID() UserID {
