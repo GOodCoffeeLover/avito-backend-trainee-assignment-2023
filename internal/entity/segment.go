@@ -25,15 +25,14 @@ func init() {
 type SegmentName string
 
 type Segment struct {
-	name SegmentName
+	Name SegmentName
 }
 
 func NewSegment(name SegmentName) (*Segment, error) {
 
 	if len(name) < segmentNameMinimalLenght {
-		return nil,
-			fmt.Errorf("%w: %v lenghts (%v) less than acceptable lenghts %v",
-				ErrInvalidSegmentNameLenght, name, len(name), segmentNameMinimalLenght)
+		return nil, fmt.Errorf("%w: %v lenghts (%v) less than acceptable lenghts %v",
+			ErrInvalidSegmentNameLenght, name, len(name), segmentNameMinimalLenght)
 	}
 
 	if !segmentNameRegEx.MatchString(string(name)) {
@@ -42,10 +41,6 @@ func NewSegment(name SegmentName) (*Segment, error) {
 	}
 
 	return &Segment{
-		name: name,
+		Name: name,
 	}, nil
-}
-
-func (s Segment) Name() SegmentName {
-	return s.name
 }

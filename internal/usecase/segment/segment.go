@@ -9,13 +9,13 @@ import (
 
 type SegmentUseCase struct {
 	segmentStorage SegmentStorage
-	userStorage    UserStorage
+	// experementStorage ExperementStorage
 }
 
-func New(segmentStorage SegmentStorage, userStorage UserStorage) *SegmentUseCase {
+func NewSegmentUsecase(segmentStorage SegmentStorage /*, experementStorage ExperementStorage*/) *SegmentUseCase {
 	return &SegmentUseCase{
 		segmentStorage: segmentStorage,
-		userStorage:    userStorage,
+		// experementStorage: experementStorage,
 	}
 }
 
@@ -32,6 +32,14 @@ func (suc *SegmentUseCase) Create(ctx context.Context, segmentName entity.Segmen
 	return nil
 }
 
+func (suc *SegmentUseCase) Read(ctx context.Context, segmentName entity.SegmentName) (*entity.Segment, error) {
+	seg, err := suc.segmentStorage.Read(ctx, segmentName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read segment(%v): %w", segmentName, err)
+	}
+	return seg, nil
+}
+
 func (suc *SegmentUseCase) Delete(ctx context.Context, segmentName entity.SegmentName) error {
 	err := suc.segmentStorage.Delete(ctx, segmentName)
 	if err != nil {
@@ -39,9 +47,9 @@ func (suc *SegmentUseCase) Delete(ctx context.Context, segmentName entity.Segmen
 	}
 
 	// TODO: fix problem when all users unassigned, but segment not deleted
-	err = suc.userStorage.UnassingnSegmentAllUsers(ctx, segmentName)
-	if err != nil {
-		return fmt.Errorf("failed to unassgn segment %v from users: %w", segmentName, err)
-	}
+	// err = suc.experementStorage.UnassingnSegmentFromAllUsers(ctx, segmentName)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to unassgn segment %v from users: %w", segmentName, err)
+	// }
 	return nil
 }
