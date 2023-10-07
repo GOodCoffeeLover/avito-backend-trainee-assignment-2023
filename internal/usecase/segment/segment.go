@@ -27,7 +27,7 @@ func (suc *SegmentUseCase) Create(ctx context.Context, segmentName entity.Segmen
 
 	err = suc.segmentStorage.Create(ctx, segment)
 	if err != nil {
-		return fmt.Errorf("failed to create segment(%v): %w", segmentName, err)
+		return fmt.Errorf("failed to create %v: %w", segmentName, err)
 	}
 	return nil
 }
@@ -35,7 +35,7 @@ func (suc *SegmentUseCase) Create(ctx context.Context, segmentName entity.Segmen
 func (suc *SegmentUseCase) Read(ctx context.Context, segmentName entity.SegmentName) (*entity.Segment, error) {
 	seg, err := suc.segmentStorage.Read(ctx, segmentName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read segment(%v): %w", segmentName, err)
+		return nil, fmt.Errorf("failed to read %v: %w", segmentName, err)
 	}
 	return seg, nil
 }
@@ -43,7 +43,7 @@ func (suc *SegmentUseCase) Read(ctx context.Context, segmentName entity.SegmentN
 func (suc *SegmentUseCase) Delete(ctx context.Context, segmentName entity.SegmentName) error {
 	err := suc.segmentStorage.Delete(ctx, segmentName)
 	if err != nil {
-		return fmt.Errorf("failed to delete segment(%v): %w", segmentName, err)
+		return fmt.Errorf("failed to delete %v: %w", segmentName, err)
 	}
 
 	// TODO: fix problem when all users unassigned, but segment not deleted

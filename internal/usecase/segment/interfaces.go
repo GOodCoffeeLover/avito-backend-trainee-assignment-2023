@@ -16,7 +16,7 @@ type (
 		UnassingnSegmentFromAllUsers(context.Context, entity.SegmentName) error
 	}
 	Segments interface {
-		Create(context.Context, *entity.SegmentName) error
+		Create(context.Context, entity.SegmentName) error
 		Read(context.Context, entity.SegmentName) (*entity.Segment, error)
 		Delete(context.Context, entity.SegmentName) error
 	}

@@ -11,7 +11,7 @@ var (
 
 const (
 	segmentNameMinimalLenght = 5
-	segmentNameRegexPattern  = "[A-Z0-9_]+"
+	segmentNameRegexPattern  = "^[A-Z0-9_]+$"
 )
 
 func init() {
@@ -25,7 +25,7 @@ func init() {
 type SegmentName string
 
 type Segment struct {
-	Name SegmentName
+	Name SegmentName `json:"name"`
 }
 
 func NewSegment(name SegmentName) (*Segment, error) {
