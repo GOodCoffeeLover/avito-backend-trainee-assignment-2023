@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/app"
@@ -8,14 +9,13 @@ import (
 )
 
 func main() {
-	cfg := &config.Config{
-		Port: 7001,
-	}
-	app, err := app.New(cfg)
+	ctx := context.Background()
+	cfg := config.New()
+	app, err := app.New(ctx, cfg)
 	if err != nil {
 		log.Fatalf("Failed to init app: %v", err)
 	}
-	if err := app.Run(); err != nil {
+	if err := app.Run(ctx); err != nil {
 		log.Fatalf("Failed to run app: %v", err)
 	}
 }

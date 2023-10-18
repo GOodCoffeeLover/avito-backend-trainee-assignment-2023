@@ -9,7 +9,8 @@ import (
 type (
 	SegmentStorage interface {
 		Create(context.Context, *entity.Segment) error
-		Read(context.Context, entity.SegmentName) (*entity.Segment, error)
+		ReadByName(context.Context, entity.SegmentName) (*entity.Segment, error)
+		ReadAll(context.Context) ([]*entity.Segment, error)
 		Delete(context.Context, entity.SegmentName) error
 	}
 	ExperementStorage interface {
@@ -18,6 +19,7 @@ type (
 	Segments interface {
 		Create(context.Context, entity.SegmentName) error
 		Read(context.Context, entity.SegmentName) (*entity.Segment, error)
+		ReadAll(context.Context) ([]*entity.Segment, error)
 		Delete(context.Context, entity.SegmentName) error
 	}
 )

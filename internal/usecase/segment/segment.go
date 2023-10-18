@@ -33,11 +33,19 @@ func (suc *SegmentUseCase) Create(ctx context.Context, segmentName entity.Segmen
 }
 
 func (suc *SegmentUseCase) Read(ctx context.Context, segmentName entity.SegmentName) (*entity.Segment, error) {
-	seg, err := suc.segmentStorage.Read(ctx, segmentName)
+	seg, err := suc.segmentStorage.ReadByName(ctx, segmentName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read %v: %w", segmentName, err)
 	}
 	return seg, nil
+}
+
+func (suc *SegmentUseCase) ReadAll(ctx context.Context) ([]*entity.Segment, error) {
+	segs, err := suc.segmentStorage.ReadAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read all segments: %w", err)
+	}
+	return segs, nil
 }
 
 func (suc *SegmentUseCase) Delete(ctx context.Context, segmentName entity.SegmentName) error {
@@ -45,11 +53,5 @@ func (suc *SegmentUseCase) Delete(ctx context.Context, segmentName entity.Segmen
 	if err != nil {
 		return fmt.Errorf("failed to delete %v: %w", segmentName, err)
 	}
-
-	// TODO: fix problem when all users unassigned, but segment not deleted
-	// err = suc.experementStorage.UnassingnSegmentFromAllUsers(ctx, segmentName)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to unassgn segment %v from users: %w", segmentName, err)
-	// }
 	return nil
 }

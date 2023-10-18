@@ -7,4 +7,5 @@ var (
 	ErrInvalidSegmentNameLenght     = errors.New("ivalid segment lenght")
 	ErrSegmentAlreadyAssigned       = errors.New("segment already assigned")
 	ErrRepeatedSegmentForExperiment = errors.New("repeated segment for experiment")
+	ErrDuplicatedValue              = errors.New("duplicated value")
 )

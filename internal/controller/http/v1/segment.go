@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/entity"
@@ -23,9 +24,11 @@ type segmentRoutes struct {
 func initSegmentRoutes(handler *gin.RouterGroup, segments segment.Segments) {
 	sr := segmentRoutes{segmets: segments}
 	h := handler.Group("/segments")
-	h.GET("/:"+segmentNameParam, sr.read)
-	h.POST("/", sr.create)
-	h.DELETE("/:"+segmentNameParam, sr.delete)
+	h.GET(fmt.Sprintf("/:%v", segmentNameParam), sr.read)
+
+	h.GET("/", sr.readAll)
+	h.POST(fmt.Sprintf("/:%v", segmentNameParam), sr.create)
+	h.DELETE(fmt.Sprintf("/:%v", segmentNameParam), sr.delete)
 }
 
 func (sr *segmentRoutes) read(ctx *gin.Context) {
@@ -39,14 +42,22 @@ func (sr *segmentRoutes) read(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, segment)
 
 }
-func (sr *segmentRoutes) create(ctx *gin.Context) {
-	seg := entity.Segment{}
-	if err := ctx.ShouldBindJSON(&seg); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, errorResponse{err.Error()})
+
+func (sr *segmentRoutes) readAll(ctx *gin.Context) {
+
+	segments, err := sr.segmets.ReadAll(ctx.Request.Context())
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse{err.Error()})
 		return
 	}
+	ctx.JSON(http.StatusOK, segments)
 
-	if err := sr.segmets.Create(ctx.Request.Context(), seg.Name); err != nil {
+}
+
+func (sr *segmentRoutes) create(ctx *gin.Context) {
+	name := ctx.Param(segmentNameParam)
+
+	if err := sr.segmets.Create(ctx.Request.Context(), entity.SegmentName(name)); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse{err.Error()})
 		return
 	}

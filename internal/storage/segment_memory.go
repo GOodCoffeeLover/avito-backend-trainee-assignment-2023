@@ -29,7 +29,7 @@ func (sims SegmentInMemoryStorage) Create(ctx context.Context, segment *entity.S
 	return nil
 }
 
-func (sims SegmentInMemoryStorage) Read(ctx context.Context, segmentName entity.SegmentName) (*entity.Segment, error) {
+func (sims SegmentInMemoryStorage) ReadByName(ctx context.Context, segmentName entity.SegmentName) (*entity.Segment, error) {
 
 	segment, ok := sims.segments[segmentName]
 	if !ok {
