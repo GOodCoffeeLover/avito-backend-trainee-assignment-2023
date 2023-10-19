@@ -25,8 +25,8 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	app := &App{
 		config: cfg,
 	}
-	handler := gin.New()
-	postgres, err := postgres.New(ctx, cfg.ConnString)
+
+	postgres, trm, err := postgres.New(ctx, cfg.ConnString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pg client: %w", err)
 	}
@@ -35,13 +35,15 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 			postgres.Close(ctx)
 		}
 	}()
-	app.onStopActions = append(app.onStopActions, func(ctx context.Context) error { return postgres.Close(ctx) })
+	app.onStopActions = append(app.onStopActions, func(ctx context.Context) error { postgres.Close(ctx); return nil })
 
 	segmentStorage, err := storage.NewSegmentPsqlStorage(ctx, postgres)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pg client: %w", err)
 	}
-	segmentUseCase := segment.NewSegmentUsecase(segmentStorage)
+	segmentUseCase := segment.NewSegmentUsecase(segmentStorage, trm)
+
+	handler := gin.New()
 	v1.NewRouter(handler, segmentUseCase)
 	app.httpHandler = handler
 	return app, nil

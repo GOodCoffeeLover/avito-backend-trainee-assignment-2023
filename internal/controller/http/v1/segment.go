@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/entity"
+	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/storage"
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/segment"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -84,7 +85,8 @@ func abortWithErrorAnalize(ctx *gin.Context, err error) {
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		status = http.StatusNotFound
-
+	case errors.Is(err, storage.ErrAlreadyExists):
+		status = http.StatusBadRequest
 	}
 	ctx.AbortWithStatusJSON(status, errorResponse{err.Error(), status})
 }

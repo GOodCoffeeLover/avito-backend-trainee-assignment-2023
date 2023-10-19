@@ -11,7 +11,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	pg, err := postgres.New(ctx, config.New().ConnString)
+	pg, _, err := postgres.New(ctx, config.New().ConnString)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect postgres")
 	}
@@ -45,14 +45,14 @@ func (m migrator) createSegmentsTable(ctx context.Context) error {
 		deleted bool DEFAULT FALSE
 	)`
 
-	tag, err := m.pg.Conn().Exec(ctx, query)
+	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
 	m.log.Info().Err(err).Msg(tag.String())
 	return err
 }
 func (m migrator) dropSegmentsTable(ctx context.Context) error {
 	query := `DROP TABLE IF EXISTS segments`
 
-	tag, err := m.pg.Conn().Exec(ctx, query)
+	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
 	m.log.Info().Err(err).Msg(tag.String())
 	return err
 }

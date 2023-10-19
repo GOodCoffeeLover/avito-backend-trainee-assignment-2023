@@ -25,30 +25,33 @@ func NewSegmentPsqlStorage(ctx context.Context, pg *postgres.Postgres) (*Segment
 	go func() {
 		ctx := context.Background()
 		for {
-			<-time.After(15 * time.Second)
+			<-time.After(60 * time.Second)
 			log.Info().Err(segStorage.Prune(ctx)).Msg("Pruning segments")
 		}
 	}()
 	return segStorage, nil
 }
 
-func (sps SegmentPsqlStorage) CloseConn(ctx context.Context) error {
-	if sps.pg.Conn() == nil {
-		return nil
-	}
-	return sps.pg.Conn().Close(ctx)
-
-}
-
 func (sps SegmentPsqlStorage) Create(ctx context.Context, segment *entity.Segment) error {
-	if _, err := sps.pg.Conn().Exec(ctx, "INSERT INTO segments (name) VALUES ($1)", segment.Name); err != nil {
+	// FIXME: conflict when deleted but not pruned
+	query := `
+	INSERT INTO segments (name) VALUES ($1)
+	ON CONFLICT (name) 
+	DO UPDATE 
+		SET deleted=FALSE
+		WHERE segments.deleted=TRUE`
+	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, segment.Name)
+	if err != nil {
 		return fmt.Errorf("failed create segment %v: %w", segment.Name, err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("failed create segment %v: %w", segment.Name, ErrAlreadyExists)
 	}
 	return nil
 }
 
 func (sps SegmentPsqlStorage) ReadByName(ctx context.Context, segmentName entity.SegmentName) (*entity.Segment, error) {
-	row := sps.pg.Conn().QueryRow(ctx, "SELECT name FROM segments WHERE name=$1 AND deleted=FALSE", segmentName)
+	row := sps.pg.Conn(ctx).QueryRow(ctx, "SELECT name FROM segments WHERE name=$1 AND deleted=FALSE", segmentName)
 
 	segment := &entity.Segment{}
 	if err := row.Scan(&segment.Name); err != nil {
@@ -57,7 +60,7 @@ func (sps SegmentPsqlStorage) ReadByName(ctx context.Context, segmentName entity
 	return segment, nil
 }
 func (sps SegmentPsqlStorage) ReadAll(ctx context.Context) ([]*entity.Segment, error) {
-	rows, err := sps.pg.Conn().Query(ctx, "SELECT name FROM segments WHERE deleted=FALSE")
+	rows, err := sps.pg.Conn(ctx).Query(ctx, "SELECT name FROM segments WHERE deleted=FALSE")
 	if err != nil {
 		return nil, fmt.Errorf("failed read all segments: %w", err)
 	}
@@ -74,7 +77,7 @@ func (sps SegmentPsqlStorage) ReadAll(ctx context.Context) ([]*entity.Segment, e
 }
 
 func (sps SegmentPsqlStorage) Delete(ctx context.Context, segmentName entity.SegmentName) error {
-	tag, err := sps.pg.Conn().Exec(ctx, "UPDATE segments SET deleted=TRUE WHERE name=$1 AND deleted=FALSE", segmentName)
+	tag, err := sps.pg.Conn(ctx).Exec(ctx, "UPDATE segments SET deleted=TRUE WHERE name=$1 AND deleted=FALSE", segmentName)
 	if err != nil {
 		return fmt.Errorf("failed deleting segment %v: %w", segmentName, err)
 	}
@@ -85,7 +88,7 @@ func (sps SegmentPsqlStorage) Delete(ctx context.Context, segmentName entity.Seg
 }
 
 func (sps SegmentPsqlStorage) Prune(ctx context.Context) error {
-	if _, err := sps.pg.Conn().Exec(ctx, "DELETE FROM segments WHERE deleted=TRUE"); err != nil {
+	if _, err := sps.pg.Conn(ctx).Exec(ctx, "DELETE FROM segments WHERE deleted=TRUE"); err != nil {
 		return fmt.Errorf("failed prune segments: %w", err)
 	}
 	return nil
