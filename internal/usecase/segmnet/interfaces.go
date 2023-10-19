@@ -13,10 +13,8 @@ type (
 		ReadAll(context.Context) ([]*entity.Segment, error)
 		Delete(context.Context, entity.SegmentName) error
 	}
-	ExperementStorage interface {
-		UnassingnSegmentFromAllUsers(context.Context, entity.SegmentName) error
-	}
-	Segments interface {
+	// TODO: maybe move to place, where it is used
+	SegmentUseCase interface {
 		Create(context.Context, entity.SegmentName) error
 		Read(context.Context, entity.SegmentName) (*entity.Segment, error)
 		ReadAll(context.Context) ([]*entity.Segment, error)

@@ -5,24 +5,22 @@ import (
 	"fmt"
 )
 
-type UserID uint
-
-type User struct {
+type Experiment struct {
 	UserID       UserID        `json:"user_id"`
 	SegmentNames []SegmentName `json:"segment_names"`
 }
 
-func NewExperiment(userID UserID, segmentNames []SegmentName) (*User, error) {
-	u := &User{UserID: userID}
+func NewExperiment(userID UserID, segmentNames []SegmentName) (*Experiment, error) {
+	e := &Experiment{UserID: userID}
 	for _, segment := range segmentNames {
-		if err := u.AssignSegment(segment); errors.Is(err, ErrSegmentAlreadyAssigned) {
-			return nil, ErrRepeatedSegmentForExperiment
+		if err := e.AssignSegment(segment); errors.Is(err, ErrSegmentAlreadyAssigned) {
+			return nil, ErrRepeatedSegment
 		}
 	}
-	return u, nil
+	return e, nil
 }
 
-func (u *User) AssignSegment(segmentName SegmentName) error {
+func (u *Experiment) AssignSegment(segmentName SegmentName) error {
 	for _, seg := range u.SegmentNames {
 		if seg == segmentName {
 			return fmt.Errorf("%v already assigned to %v: %w", segmentName, u.UserID, ErrSegmentAlreadyAssigned)

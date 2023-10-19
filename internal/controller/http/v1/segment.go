@@ -1,32 +1,20 @@
 package v1
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/entity"
-	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/storage"
-	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/segment"
+	segment "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/segmnet"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
-)
-
-type errorResponse struct {
-	Error string `json:"error"`
-	Code  int    `json:"code"`
-}
-
-const (
-	segmentNameParam = "segment_name"
 )
 
 type segmentRoutes struct {
-	segmets segment.Segments
+	segmets segment.SegmentUseCase
 }
 
-func initSegmentRoutes(handler *gin.RouterGroup, segments segment.Segments) {
-	sr := segmentRoutes{segmets: segments}
+func initSegmentRoutes(handler *gin.RouterGroup, segments segment.SegmentUseCase) {
+	sr := newSegmentRoutes(segments)
 	h := handler.Group("/segments")
 
 	h.GET("/", sr.readAll)
@@ -36,6 +24,9 @@ func initSegmentRoutes(handler *gin.RouterGroup, segments segment.Segments) {
 	h.DELETE(fmt.Sprintf("/:%v", segmentNameParam), sr.delete)
 }
 
+func newSegmentRoutes(segments segment.SegmentUseCase) segmentRoutes {
+	return segmentRoutes{segmets: segments}
+}
 func (sr *segmentRoutes) read(ctx *gin.Context) {
 	name := ctx.Param(segmentNameParam)
 
@@ -78,15 +69,4 @@ func (sr *segmentRoutes) delete(ctx *gin.Context) {
 	}
 	ctx.Status(http.StatusOK)
 
-}
-
-func abortWithErrorAnalize(ctx *gin.Context, err error) {
-	status := http.StatusInternalServerError
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
-		status = http.StatusNotFound
-	case errors.Is(err, storage.ErrAlreadyExists):
-		status = http.StatusBadRequest
-	}
-	ctx.AbortWithStatusJSON(status, errorResponse{err.Error(), status})
 }

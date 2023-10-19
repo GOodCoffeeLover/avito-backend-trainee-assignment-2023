@@ -11,17 +11,33 @@ import (
 
 func main() {
 	ctx := context.Background()
-	pg, _, err := postgres.New(ctx, config.New().ConnString)
+	pg, trm, err := postgres.New(ctx, config.New().ConnString)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect postgres")
 	}
 	defer pg.Close(ctx)
 	m := newMigrator(ctx, pg, zerolog.TraceLevel)
-	if err = m.dropSegmentsTable(ctx); err != nil {
-		log.Fatal().Err(err).Msg("failed to drop segments table")
-	}
-	if err = m.createSegmentsTable(ctx); err != nil {
-		log.Fatal().Err(err).Msg("failed to create segments table")
+	err = trm.Do(ctx, func(ctx context.Context) error {
+		if err := m.dropSegmentsTable(ctx); err != nil {
+			log.Fatal().Err(err).Msg("failed to drop segments table")
+			return err
+		}
+		if err := m.createSegmentsTable(ctx); err != nil {
+			log.Fatal().Err(err).Msg("failed to create segments table")
+			return err
+		}
+		if err := m.dropUsersTable(ctx); err != nil {
+			log.Fatal().Err(err).Msg("failed to drop users table")
+			return err
+		}
+		if err := m.createUsersTable(ctx); err != nil {
+			log.Fatal().Err(err).Msg("failed to create users table")
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to exec migration")
 	}
 }
 
@@ -51,6 +67,24 @@ func (m migrator) createSegmentsTable(ctx context.Context) error {
 }
 func (m migrator) dropSegmentsTable(ctx context.Context) error {
 	query := `DROP TABLE IF EXISTS segments`
+
+	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
+	m.log.Info().Err(err).Msg(tag.String())
+	return err
+}
+
+func (m migrator) createUsersTable(ctx context.Context) error {
+	query := `CREATE TABLE IF NOT EXISTS users (
+		id integer PRIMARY KEY UNIQUE CONSTRAINT uint CHECK (id > 0),
+		deleted bool DEFAULT FALSE
+	)`
+
+	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
+	m.log.Info().Err(err).Msg(tag.String())
+	return err
+}
+func (m migrator) dropUsersTable(ctx context.Context) error {
+	query := `DROP TABLE IF EXISTS users`
 
 	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
 	m.log.Info().Err(err).Msg(tag.String())
