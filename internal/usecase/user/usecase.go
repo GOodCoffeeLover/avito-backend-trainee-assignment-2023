@@ -10,7 +10,7 @@ import (
 
 type UseCase struct {
 	users      UserStorage
-	trxManager *manager.Manager // for history transactions
+	trxManager *manager.Manager
 }
 
 func New(users UserStorage, trxManager *manager.Manager) *UseCase {

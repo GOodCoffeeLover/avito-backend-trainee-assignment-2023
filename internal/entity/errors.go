@@ -8,4 +8,5 @@ var (
 	ErrSegmentAlreadyAssigned    = errors.New("segment already assigned")
 	ErrRepeatedSegment           = errors.New("repeated segment")
 	ErrDuplicatedValue           = errors.New("duplicated value")
+	ErrNotFound                  = errors.New("not found")
 )
