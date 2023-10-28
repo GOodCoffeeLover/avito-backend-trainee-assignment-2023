@@ -100,7 +100,7 @@ func (m migrator) dropUsersTable(ctx context.Context) error {
 }
 
 func (m migrator) createAssigmentsTable(ctx context.Context) error {
-	query := `CREATE TABLE IF NOT EXISTS assigments (
+	query := `CREATE TABLE IF NOT EXISTS assignments (
         user_id integer references users(id),
 		segment_name VARCHAR(40) references segments(name),
         deleted bool DEFAULT FALSE, 
@@ -112,7 +112,7 @@ func (m migrator) createAssigmentsTable(ctx context.Context) error {
 	return err
 }
 func (m migrator) dropAssigmentsTable(ctx context.Context) error {
-	query := `DROP TABLE IF EXISTS assigments`
+	query := `DROP TABLE IF EXISTS assignments`
 
 	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
 	m.log.Info().Err(err).Msg(tag.String())

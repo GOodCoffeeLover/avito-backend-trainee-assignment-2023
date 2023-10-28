@@ -1,4 +1,4 @@
-package assigment
+package assignment
 
 import (
 	"context"
@@ -9,35 +9,35 @@ import (
 )
 
 type UseCase struct {
-	segments   SegmentStorage
-	users      UserStorage
-	assigments AssignmentStorage
-	trxManager *manager.Manager // for history transactions
+	segments    SegmentStorage
+	users       UserStorage
+	assignments AssignmentStorage
+	trxManager  *manager.Manager // for history transactions
 }
 
-func New(segments SegmentStorage, users UserStorage, assigments AssignmentStorage, trxManager *manager.Manager) *UseCase {
+func New(segments SegmentStorage, users UserStorage, assignments AssignmentStorage, trxManager *manager.Manager) *UseCase {
 	return &UseCase{
-		segments:   segments,
-		users:      users,
-		assigments: assigments,
-		trxManager: trxManager,
+		segments:    segments,
+		users:       users,
+		assignments: assignments,
+		trxManager:  trxManager,
 	}
 }
 
 func (uc *UseCase) ReadByUserID(ctx context.Context, uid entity.UserID) ([]*entity.Assignment, error) {
-	var assigments []*entity.Assignment
+	var assignments []*entity.Assignment
 	err := uc.trxManager.Do(ctx, func(ctx context.Context) error {
 		var err error
 		if _, err = uc.users.ReadByID(ctx, uid); err != nil {
 			return fmt.Errorf("unknown user with id %v %w", uid, entity.ErrNotFound)
 		}
-		assigments, err = uc.assigments.ReadByUserID(ctx, uid)
+		assignments, err = uc.assignments.ReadByUserID(ctx, uid)
 		if err != nil {
-			return fmt.Errorf("failed get assigments for userid(%v) %w", uid, entity.ErrNotFound)
+			return fmt.Errorf("failed get assignments for userid(%v) %w", uid, entity.ErrNotFound)
 		}
 		return nil
 	})
-	return assigments, err
+	return assignments, err
 }
 
 func (uc *UseCase) SetToUserByID(ctx context.Context, uid entity.UserID, segments []entity.SegmentName) error {
@@ -53,12 +53,12 @@ func (uc *UseCase) SetToUserByID(ctx context.Context, uid entity.UserID, segment
 		}
 
 		for _, segment := range segments {
-			assigment, err := entity.NewAssignment(uid, segment)
+			assignment, err := entity.NewAssignment(uid, segment)
 			if err != nil {
-				return fmt.Errorf("failed to create assigment to segment %v : %w", segment, err)
+				return fmt.Errorf("failed to create assignment to segment %v : %w", segment, err)
 			}
-			if err = uc.assigments.Create(ctx, assigment); err != nil {
-				return fmt.Errorf("failed to save assigment %v: %w", assigment, err)
+			if err = uc.assignments.Create(ctx, assignment); err != nil {
+				return fmt.Errorf("failed to save assignment %v: %w", assignment, err)
 			}
 		}
 		return nil
@@ -67,19 +67,19 @@ func (uc *UseCase) SetToUserByID(ctx context.Context, uid entity.UserID, segment
 
 func (uc *UseCase) UnsetToUserByID(ctx context.Context, uid entity.UserID, segments []entity.SegmentName) error {
 	return uc.trxManager.Do(ctx, func(ctx context.Context) error {
-		assigments, err := uc.assigments.ReadByUserID(ctx, uid)
+		assignments, err := uc.assignments.ReadByUserID(ctx, uid)
 		if err != nil {
-			return fmt.Errorf("failed to get assigments for user %v: %w", uid, err)
+			return fmt.Errorf("failed to get assignments for user %v: %w", uid, err)
 		}
 		segmentsForDeletion := map[entity.SegmentName]struct{}{}
 		for _, segment := range segments {
 			segmentsForDeletion[segment] = struct{}{}
 
 		}
-		for _, assigment := range assigments {
-			if _, ok := segmentsForDeletion[assigment.Segment]; ok {
-				uc.assigments.Delete(ctx, assigment)
-				delete(segmentsForDeletion, assigment.Segment)
+		for _, assignment := range assignments {
+			if _, ok := segmentsForDeletion[assignment.Segment]; ok {
+				uc.assignments.Delete(ctx, assignment)
+				delete(segmentsForDeletion, assignment.Segment)
 			}
 		}
 		if len(segmentsForDeletion) != 0 {

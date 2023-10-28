@@ -8,7 +8,7 @@ import (
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/app/config"
 	http_router "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/controller/http"
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/storage"
-	assigment_usecase "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/assigment"
+	assignment_usecase "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/assignment"
 	segment_usecase "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/segmnet"
 	user_usecase "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/user"
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/pkg/postgres"
@@ -52,14 +52,14 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	}
 	users := user_usecase.New(userStorage, trm)
 
-	assigmentStorage, err := storage.NewAssignmentPsql(ctx, postgres)
+	assignmentStorage, err := storage.NewAssignmentPsql(ctx, postgres)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create pg assigment storage: %w", err)
+		return nil, fmt.Errorf("failed to create pg assignment storage: %w", err)
 	}
-	assigments := assigment_usecase.New(segmentStorage, userStorage, assigmentStorage, trm)
+	assignments := assignment_usecase.New(segmentStorage, userStorage, assignmentStorage, trm)
 
 	handler := gin.New()
-	http_router.NewRouter(handler, segments, users, assigments)
+	http_router.NewRouter(handler, segments, users, assignments)
 	app.httpHandler = handler
 	return app, nil
 }

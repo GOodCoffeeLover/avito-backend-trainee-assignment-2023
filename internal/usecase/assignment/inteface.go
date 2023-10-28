@@ -1,4 +1,4 @@
-package assigment
+package assignment
 
 import (
 	"context"

@@ -5,13 +5,13 @@ import "errors"
 var (
 	ErrAlreadyExists = errors.New("alredy exists")
 	ErrNotFound      = errors.New("not found")
-	assigmentsTable  = struct {
+	assignmentsTable = struct {
 		name        string
 		userID      string
 		segmentName string
 		deleted     string
 	}{
-		name:        "assigments",
+		name:        "assignments",
 		userID:      "user_id",
 		segmentName: "segment_name",
 		deleted:     "deleted",
