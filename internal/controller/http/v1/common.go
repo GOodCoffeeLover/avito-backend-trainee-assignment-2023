@@ -26,7 +26,7 @@ func abortWithErrorAnalize(ctx *gin.Context, err error) {
 	status := http.StatusInternalServerError
 	switch {
 	// case errors.Is(err, pgx.ErrNoRows):
-	// 	status = http.StatusNotFound
+	//     status = http.StatusNotFound
 	case errors.Is(err, storage.ErrNotFound):
 		status = http.StatusNotFound
 	case errors.Is(err, storage.ErrAlreadyExists):

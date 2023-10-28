@@ -57,9 +57,9 @@ type migrator struct {
 
 func (m migrator) createSegmentsTable(ctx context.Context) error {
 	query := `CREATE TABLE IF NOT EXISTS segments (
-		name varchar(40) PRIMARY KEY UNIQUE,
-		deleted bool DEFAULT FALSE
-	)`
+        name varchar(40) PRIMARY KEY UNIQUE,
+        deleted bool DEFAULT FALSE
+    )`
 
 	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
 	m.log.Info().Err(err).Msg(tag.String())
@@ -75,9 +75,9 @@ func (m migrator) dropSegmentsTable(ctx context.Context) error {
 
 func (m migrator) createUsersTable(ctx context.Context) error {
 	query := `CREATE TABLE IF NOT EXISTS users (
-		id integer PRIMARY KEY UNIQUE CONSTRAINT uint CHECK (id > 0),
-		deleted bool DEFAULT FALSE
-	)`
+        id integer PRIMARY KEY UNIQUE CONSTRAINT uint CHECK (id > 0),
+        deleted bool DEFAULT FALSE
+    )`
 
 	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
 	m.log.Info().Err(err).Msg(tag.String())

@@ -14,8 +14,9 @@ type (
 		ReadByID(context.Context, entity.UserID) (*entity.User, error)
 	}
 	AssignmentStorage interface {
-		ReadByUserID(context.Context, entity.UserID) (*entity.Assignment, error)
+		ReadByUserID(context.Context, entity.UserID) ([]*entity.Assignment, error)
 		Save(context.Context, *entity.Assignment) error
+		Delete(context.Context, *entity.Assignment) error
 	}
 	// TODO: maybe move to place, where it is used
 	AssigmentUseCase interface {

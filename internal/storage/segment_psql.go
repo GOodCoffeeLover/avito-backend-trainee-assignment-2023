@@ -35,11 +35,11 @@ func NewSegmentPsql(ctx context.Context, pg *postgres.Postgres) (*SegmentPsql, e
 
 func (sps SegmentPsql) Create(ctx context.Context, segment *entity.Segment) error {
 	query := `
-	INSERT INTO segments (name) VALUES ($1)
-	ON CONFLICT (name) 
-	DO UPDATE 
-		SET deleted=FALSE
-		WHERE segments.deleted=TRUE`
+    INSERT INTO segments (name) VALUES ($1)
+    ON CONFLICT (name) 
+    DO UPDATE 
+        SET deleted=FALSE
+        WHERE segments.deleted=TRUE`
 	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, segment.Name)
 	if err != nil {
 		return fmt.Errorf("failed create segment %+v: %w", segment, err)

@@ -35,11 +35,11 @@ func NewUserPsql(ctx context.Context, pg *postgres.Postgres) (*UserPsql, error) 
 
 func (sps UserPsql) Create(ctx context.Context, user *entity.User) error {
 	query := `
-	INSERT INTO users (id) VALUES ($1)
-	ON CONFLICT (id) 
-	DO UPDATE 
-		SET deleted=FALSE
-		WHERE users.deleted=TRUE`
+    INSERT INTO users (id) VALUES ($1)
+    ON CONFLICT (id) 
+    DO UPDATE 
+        SET deleted=FALSE
+        WHERE users.deleted=TRUE`
 	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, user.ID)
 	if err != nil {
 		return fmt.Errorf("failed create user %+v: %w", user, err)
