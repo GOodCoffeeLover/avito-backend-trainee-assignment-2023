@@ -16,6 +16,10 @@ func New(ctx context.Context, connString string) (*Postgres, *manager.Manager, e
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to connect to psql: %w", err)
 	}
+	err = pool.Ping(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed ping postgres: %w", err)
+	}
 	trm, err := manager.New(pgxv5.NewDefaultFactory(pool))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create transaction manager: %w", err)

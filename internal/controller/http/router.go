@@ -1,15 +1,16 @@
-package v1
+package http
 
 import (
 	"net/http"
 
+	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/assigment"
 	segment "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/segmnet"
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/user"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func NewRouter(handler *gin.Engine, segments segment.SegmentUseCase, users user.UserUseCase) {
+func NewRouter(handler *gin.Engine, segments segment.SegmentUseCase, users user.UserUseCase, asassigments assigment.AssigmentUseCase) {
 	// Options
 	handler.Use(gin.Logger(), gin.Recovery())
 
@@ -28,5 +29,6 @@ func NewRouter(handler *gin.Engine, segments segment.SegmentUseCase, users user.
 
 	initSegmentRoutes(h, segments)
 	initUserRoutes(h, users)
+	initAssigmentRoutes(h, asassigments)
 
 }

@@ -1,4 +1,4 @@
-package v1
+package http
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func newUserRoutes(users user.UserUseCase) userRoutes {
 func (ur *userRoutes) read(ctx *gin.Context) {
 	uid, err := strconv.ParseUint(ctx.Param(userIDParam), 10, 32)
 	if err != nil {
-		abortWithErrorAnalize(ctx, ErrInvalidArgument)
+		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", ErrInvalidArgument, err))
 		return
 	}
 	segment, err := ur.users.Read(ctx.Request.Context(), entity.UserID(uid))
@@ -57,7 +57,7 @@ func (ur *userRoutes) readAll(ctx *gin.Context) {
 func (ur *userRoutes) create(ctx *gin.Context) {
 	uid, err := strconv.ParseUint(ctx.Param(userIDParam), 10, 32)
 	if err != nil {
-		abortWithErrorAnalize(ctx, ErrInvalidArgument)
+		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", ErrInvalidArgument, err))
 		return
 	}
 	if err := ur.users.Create(ctx.Request.Context(), entity.UserID(uid)); err != nil {
@@ -70,7 +70,7 @@ func (ur *userRoutes) create(ctx *gin.Context) {
 func (ur *userRoutes) delete(ctx *gin.Context) {
 	uid, err := strconv.ParseUint(ctx.Param(userIDParam), 10, 32)
 	if err != nil {
-		abortWithErrorAnalize(ctx, ErrInvalidArgument)
+		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", ErrInvalidArgument, err))
 		return
 	}
 	if err := ur.users.Delete(ctx.Request.Context(), entity.UserID(uid)); err != nil {

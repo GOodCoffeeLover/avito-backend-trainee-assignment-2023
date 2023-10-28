@@ -1,4 +1,4 @@
-package v1
+package http
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ type segmentRoutes struct {
 
 func initSegmentRoutes(handler *gin.RouterGroup, segments segment.SegmentUseCase) {
 	sr := newSegmentRoutes(segments)
-	h := handler.Group("/segments")
+	h := handler.Group("/segment")
 
 	h.GET("/", sr.readAll)
 	h.GET(fmt.Sprintf("/:%v", segmentNameParam), sr.read)

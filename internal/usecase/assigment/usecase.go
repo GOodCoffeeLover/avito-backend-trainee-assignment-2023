@@ -24,7 +24,7 @@ func New(segments SegmentStorage, users UserStorage, assigments AssignmentStorag
 	}
 }
 
-func (uc *UseCase) GetForUserByID(ctx context.Context, uid entity.UserID) ([]*entity.Assignment, error) {
+func (uc *UseCase) ReadByUserID(ctx context.Context, uid entity.UserID) ([]*entity.Assignment, error) {
 	var assigments []*entity.Assignment
 	err := uc.trxManager.Do(ctx, func(ctx context.Context) error {
 		var err error
@@ -40,7 +40,7 @@ func (uc *UseCase) GetForUserByID(ctx context.Context, uid entity.UserID) ([]*en
 	return assigments, err
 }
 
-func (uc *UseCase) SetForUserByID(ctx context.Context, uid entity.UserID, segments []entity.SegmentName) error {
+func (uc *UseCase) SetToUserByID(ctx context.Context, uid entity.UserID, segments []entity.SegmentName) error {
 	return uc.trxManager.Do(ctx, func(ctx context.Context) error {
 		var err error
 		if _, err = uc.users.ReadByID(ctx, uid); err != nil {
@@ -57,7 +57,7 @@ func (uc *UseCase) SetForUserByID(ctx context.Context, uid entity.UserID, segmen
 			if err != nil {
 				return fmt.Errorf("failed to create assigment to segment %v : %w", segment, err)
 			}
-			if err = uc.assigments.Save(ctx, assigment); err != nil {
+			if err = uc.assigments.Create(ctx, assigment); err != nil {
 				return fmt.Errorf("failed to save assigment %v: %w", assigment, err)
 			}
 		}
@@ -65,7 +65,7 @@ func (uc *UseCase) SetForUserByID(ctx context.Context, uid entity.UserID, segmen
 	})
 }
 
-func (uc *UseCase) UnsetForUserByID(ctx context.Context, uid entity.UserID, segments []entity.SegmentName) error {
+func (uc *UseCase) UnsetToUserByID(ctx context.Context, uid entity.UserID, segments []entity.SegmentName) error {
 	return uc.trxManager.Do(ctx, func(ctx context.Context) error {
 		assigments, err := uc.assigments.ReadByUserID(ctx, uid)
 		if err != nil {

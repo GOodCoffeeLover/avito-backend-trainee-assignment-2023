@@ -34,6 +34,14 @@ func main() {
 			log.Fatal().Err(err).Msg("failed to create users table")
 			return err
 		}
+		if err := m.dropAssigmentsTable(ctx); err != nil {
+			log.Fatal().Err(err).Msg("failed to drop users table")
+			return err
+		}
+		if err := m.createAssigmentsTable(ctx); err != nil {
+			log.Fatal().Err(err).Msg("failed to create users table")
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -85,6 +93,26 @@ func (m migrator) createUsersTable(ctx context.Context) error {
 }
 func (m migrator) dropUsersTable(ctx context.Context) error {
 	query := `DROP TABLE IF EXISTS users`
+
+	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
+	m.log.Info().Err(err).Msg(tag.String())
+	return err
+}
+
+func (m migrator) createAssigmentsTable(ctx context.Context) error {
+	query := `CREATE TABLE IF NOT EXISTS assigments (
+        user_id integer references users(id),
+		segment_name VARCHAR(40) references segments(name),
+        deleted bool DEFAULT FALSE, 
+		PRIMARY KEY (user_id,segment_name)
+    )`
+
+	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
+	m.log.Info().Err(err).Msg(tag.String())
+	return err
+}
+func (m migrator) dropAssigmentsTable(ctx context.Context) error {
+	query := `DROP TABLE IF EXISTS assigments`
 
 	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
 	m.log.Info().Err(err).Msg(tag.String())
