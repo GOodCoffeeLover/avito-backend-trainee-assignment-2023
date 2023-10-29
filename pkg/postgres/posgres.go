@@ -11,7 +11,6 @@ import (
 )
 
 func New(ctx context.Context, connString string) (*Postgres, *manager.Manager, error) {
-
 	pool, err := pgxpool.New(ctx, connString)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to connect to psql: %w", err)

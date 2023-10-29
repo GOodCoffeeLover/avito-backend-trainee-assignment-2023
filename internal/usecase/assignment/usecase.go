@@ -33,7 +33,7 @@ func (uc *UseCase) ReadByUserID(ctx context.Context, uid entity.UserID) ([]*enti
 		}
 		assignments, err = uc.assignments.ReadByUserID(ctx, uid)
 		if err != nil {
-			return fmt.Errorf("failed get assignments for userid(%v) %w", uid, entity.ErrNotFound)
+			return fmt.Errorf("failed get assignments for userid(%v): %w: %w:", uid, err, entity.ErrNotFound)
 		}
 		return nil
 	})

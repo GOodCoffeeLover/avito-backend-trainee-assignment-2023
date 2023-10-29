@@ -51,9 +51,9 @@ func (as AssignmentPsql) ReadByUserID(ctx context.Context, uid entity.UserID) ([
 	assignments := []*entity.Assignment{}
 	for rows.Next() {
 		var asssigment entity.Assignment
-		err = rows.Scan(asssigment.User, asssigment.Segment)
+		err = rows.Scan(&asssigment.User, &asssigment.Segment)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan assignments %w", err)
+			return nil, fmt.Errorf("failed to scan assignments: %w", err)
 		}
 		assignments = append(assignments, &asssigment)
 	}
@@ -61,30 +61,30 @@ func (as AssignmentPsql) ReadByUserID(ctx context.Context, uid entity.UserID) ([
 }
 
 func (as AssignmentPsql) Create(ctx context.Context, assignment *entity.Assignment) error {
-	updateQuery, updateArgs, err := as.pg.Builder().
-		Update(assignmentsTable.name).
-		Set(assignmentsTable.userID, assignment.User).
-		Set(assignmentsTable.segmentName, assignment.Segment).
-		Set(assignmentsTable.deleted, false).
-		Where(sql.Eq{assignmentsTable.deleted: true}).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("failed buled query: %w", err)
-	}
 	query, args, err := as.pg.Builder().
 		Insert(assignmentsTable.name).
 		Columns(assignmentsTable.userID, assignmentsTable.segmentName).
 		Values(assignment.User, assignment.Segment).
-		Suffix(fmt.Sprintf("ON CONFLICT (%v, %v) DO %v",
-			assignmentsTable.userID, assignmentsTable.segmentName, updateQuery), updateArgs...).
+		Suffix(
+			fmt.Sprintf(
+				`ON CONFLICT (%v, %v) DO UPDATE SET %v = ?, %v = ?, %v = ? WHERE %v = ?`,
+				assignmentsTable.userID, assignmentsTable.segmentName,
+				assignmentsTable.userID, assignmentsTable.segmentName, assignmentsTable.deleted,
+				fmt.Sprintf("%v.%v", assignmentsTable.name, assignmentsTable.deleted)),
+			assignment.User, assignment.Segment, false,
+			true,
+		).
 		ToSql()
 	fmt.Println(query)
 	if err != nil {
 		return fmt.Errorf("failed buled query: %w", err)
 	}
-	_, err = as.pg.Conn(ctx).Exec(ctx, query, args...)
+	tag, err := as.pg.Conn(ctx).Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed save assignment %v: %w", assignment, err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("assigment %w", ErrAlreadyExists)
 	}
 	return nil
 }
