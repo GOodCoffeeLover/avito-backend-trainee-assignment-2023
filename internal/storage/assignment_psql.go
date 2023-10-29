@@ -35,6 +35,16 @@ func NewAssignmentPsql(ctx context.Context, pg *postgres.Postgres) (*AssignmentP
 
 func (as AssignmentPsql) ReadByUserID(ctx context.Context, uid entity.UserID) ([]*entity.Assignment, error) {
 	// TODO: fix quering deleted users or segments
+	// SELECT user_id, segment_name
+	// FROM assignments
+	// INNER JOIN (
+	//         SELECT * FROM users
+	//         WHERE deleted = FALSE
+	// ) AS users ON assignments.user_id = users.id
+	// INNER JOIN (
+	//         SELECT * FROM segments
+	//         WHERE deleted = FALSE
+	// ) AS segments ON assignments.segment_name = segments.name ;
 	query, args, err := as.pg.Builder().
 		Select(assignmentsTable.userID, assignmentsTable.segmentName).
 		From(assignmentsTable.name).

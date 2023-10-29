@@ -18,6 +18,10 @@ func main() {
 	defer pg.Close(ctx)
 	m := newMigrator(ctx, pg, zerolog.TraceLevel)
 	err = trm.Do(ctx, func(ctx context.Context) error {
+		if err := m.dropAssigmentsTable(ctx); err != nil {
+			log.Fatal().Err(err).Msg("failed to drop users table")
+			return err
+		}
 		if err := m.dropSegmentsTable(ctx); err != nil {
 			log.Fatal().Err(err).Msg("failed to drop segments table")
 			return err
@@ -32,10 +36,6 @@ func main() {
 		}
 		if err := m.createUsersTable(ctx); err != nil {
 			log.Fatal().Err(err).Msg("failed to create users table")
-			return err
-		}
-		if err := m.dropAssigmentsTable(ctx); err != nil {
-			log.Fatal().Err(err).Msg("failed to drop users table")
 			return err
 		}
 		if err := m.createAssigmentsTable(ctx); err != nil {
@@ -101,8 +101,8 @@ func (m migrator) dropUsersTable(ctx context.Context) error {
 
 func (m migrator) createAssigmentsTable(ctx context.Context) error {
 	query := `CREATE TABLE IF NOT EXISTS assignments (
-        user_id integer references users(id),
-		segment_name VARCHAR(40) references segments(name),
+        user_id integer REFERENCES users(id) ON DELETE CASCADE,
+		segment_name VARCHAR(40) REFERENCES segments(name) ON DELETE CASCADE,
         deleted bool DEFAULT FALSE, 
 		PRIMARY KEY (user_id,segment_name)
     )`
