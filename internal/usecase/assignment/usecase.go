@@ -96,7 +96,7 @@ func (uc *UseCase) UnsetToUserByID(ctx context.Context, uid entity.UserID, segme
 			for segment := range segmentsForDeletion {
 				segs = append(segs, segment)
 			}
-			return fmt.Errorf("unassigned segs: %v: %w", segs, entity.ErrNotFound)
+			return fmt.Errorf("%w assignments to segments: %v", entity.ErrNotFound, segs)
 		}
 		return nil
 	})
