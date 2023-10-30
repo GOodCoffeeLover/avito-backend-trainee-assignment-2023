@@ -93,8 +93,10 @@ func (sps SegmentPsql) Delete(ctx context.Context, segmentName entity.SegmentNam
 }
 
 func (sps SegmentPsql) Prune(ctx context.Context) error {
-	if _, err := sps.pg.Conn(ctx).Exec(ctx, "DELETE FROM segments WHERE deleted=TRUE"); err != nil {
+	tag, err := sps.pg.Conn(ctx).Exec(ctx, "DELETE FROM segments WHERE deleted=TRUE")
+	if err != nil {
 		return fmt.Errorf("failed prune segments: %w", err)
 	}
+	log.Info().Msgf("prune %v segments by %v", tag.RowsAffected(), tag.String())
 	return nil
 }

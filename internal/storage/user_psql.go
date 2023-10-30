@@ -93,8 +93,10 @@ func (sps UserPsql) Delete(ctx context.Context, uid entity.UserID) error {
 }
 
 func (sps UserPsql) Prune(ctx context.Context) error {
-	if _, err := sps.pg.Conn(ctx).Exec(ctx, "DELETE FROM users WHERE deleted=TRUE"); err != nil {
+	tag, err := sps.pg.Conn(ctx).Exec(ctx, "DELETE FROM users WHERE deleted=TRUE")
+	if err != nil {
 		return fmt.Errorf("failed prune users: %w", err)
 	}
+	log.Info().Msgf("prune %v users by %v", tag.RowsAffected(), tag.String())
 	return nil
 }

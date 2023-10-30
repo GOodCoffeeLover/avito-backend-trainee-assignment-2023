@@ -6,6 +6,8 @@ import (
 
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/entity"
 	"github.com/avito-tech/go-transaction-manager/trm/manager"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type UseCase struct {
@@ -13,14 +15,17 @@ type UseCase struct {
 	users       UserStorage
 	assignments AssignmentStorage
 	trxManager  *manager.Manager // for history transactions
+	log         zerolog.Logger
 }
 
 func New(segments SegmentStorage, users UserStorage, assignments AssignmentStorage, trxManager *manager.Manager) *UseCase {
+	log := log.Logger.With().Str("level", "usecase").Str("component", "assigments").Logger()
 	return &UseCase{
 		segments:    segments,
 		users:       users,
 		assignments: assignments,
 		trxManager:  trxManager,
+		log:         log,
 	}
 }
 
@@ -33,7 +38,7 @@ func (uc *UseCase) ReadByUserID(ctx context.Context, uid entity.UserID) ([]*enti
 		}
 		assignments, err = uc.assignments.ReadByUserID(ctx, uid)
 		if err != nil {
-			return fmt.Errorf("failed get assignments for userid(%v): %w: %w:", uid, err, entity.ErrNotFound)
+			return fmt.Errorf("failed get assignments for userid(%v): %w: %w", uid, err, entity.ErrNotFound)
 		}
 		return nil
 	})
@@ -67,17 +72,21 @@ func (uc *UseCase) SetToUserByID(ctx context.Context, uid entity.UserID, segment
 
 func (uc *UseCase) UnsetToUserByID(ctx context.Context, uid entity.UserID, segments []entity.SegmentName) error {
 	return uc.trxManager.Do(ctx, func(ctx context.Context) error {
+		uc.log.Debug().Msgf("unsetting segments %v from user %v", segments, uid)
 		assignments, err := uc.assignments.ReadByUserID(ctx, uid)
 		if err != nil {
 			return fmt.Errorf("failed to get assignments for user %v: %w", uid, err)
 		}
+		uc.log.Debug().Msgf("get assigments %v", assignments)
+
 		segmentsForDeletion := map[entity.SegmentName]struct{}{}
 		for _, segment := range segments {
 			segmentsForDeletion[segment] = struct{}{}
-
 		}
+
 		for _, assignment := range assignments {
 			if _, ok := segmentsForDeletion[assignment.Segment]; ok {
+				uc.log.Debug().Msgf("deleting %v segment", assignment.Segment)
 				uc.assignments.Delete(ctx, assignment)
 				delete(segmentsForDeletion, assignment.Segment)
 			}
@@ -87,7 +96,7 @@ func (uc *UseCase) UnsetToUserByID(ctx context.Context, uid entity.UserID, segme
 			for segment := range segmentsForDeletion {
 				segs = append(segs, segment)
 			}
-			return fmt.Errorf("unassigned segs: %v", segs)
+			return fmt.Errorf("unassigned segs: %v: %w", segs, entity.ErrNotFound)
 		}
 		return nil
 	})

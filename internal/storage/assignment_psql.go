@@ -34,26 +34,19 @@ func NewAssignmentPsql(ctx context.Context, pg *postgres.Postgres) (*AssignmentP
 }
 
 func (as AssignmentPsql) ReadByUserID(ctx context.Context, uid entity.UserID) ([]*entity.Assignment, error) {
-	// TODO: fix quering deleted users or segments
-	// SELECT user_id, segment_name
-	// FROM assignments
-	// INNER JOIN (
-	//         SELECT * FROM users
-	//         WHERE deleted = FALSE
-	// ) AS users ON assignments.user_id = users.id
-	// INNER JOIN (
-	//         SELECT * FROM segments
-	//         WHERE deleted = FALSE
-	// ) AS segments ON assignments.segment_name = segments.name ;
 	query, args, err := as.pg.Builder().
 		Select(assignmentsTable.userID, assignmentsTable.segmentName).
 		From(assignmentsTable.name).
-		Where(sql.Eq{assignmentsTable.userID: uid}).
-		Where(sql.Eq{assignmentsTable.deleted: false}).
+		Where(sql.Eq{assignmentsTable.name + "." + assignmentsTable.userID: uid}).
+		Where(sql.Eq{assignmentsTable.name + "." + assignmentsTable.deleted: false}).
+		InnerJoin("( SELECT * FROM users WHERE deleted = FALSE ) AS users ON assignments.user_id = users.id").
+		InnerJoin("( SELECT * FROM segments WHERE deleted = FALSE ) AS segments ON assignments.segment_name = segments.name").
 		ToSql()
+	fmt.Println(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed buled query: %w", err)
 	}
+
 	rows, err := as.pg.Conn(ctx).Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed get users assignments: %w", err)
@@ -77,15 +70,13 @@ func (as AssignmentPsql) Create(ctx context.Context, assignment *entity.Assignme
 		Values(assignment.User, assignment.Segment).
 		Suffix(
 			fmt.Sprintf(
-				`ON CONFLICT (%v, %v) DO UPDATE SET %v = ?, %v = ?, %v = ? WHERE %v = ?`,
+				`ON CONFLICT (%v, %v) DO UPDATE SET %v = ?, %v = ?, %v = FALSE WHERE %v = TRUE`,
 				assignmentsTable.userID, assignmentsTable.segmentName,
 				assignmentsTable.userID, assignmentsTable.segmentName, assignmentsTable.deleted,
 				fmt.Sprintf("%v.%v", assignmentsTable.name, assignmentsTable.deleted)),
-			assignment.User, assignment.Segment, false,
-			true,
+			assignment.User, assignment.Segment,
 		).
 		ToSql()
-	fmt.Println(query)
 	if err != nil {
 		return fmt.Errorf("failed buled query: %w", err)
 	}
