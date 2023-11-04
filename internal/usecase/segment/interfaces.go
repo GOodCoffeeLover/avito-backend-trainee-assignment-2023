@@ -13,6 +13,9 @@ type (
 		ReadAll(context.Context) ([]*entity.Segment, error)
 		Delete(context.Context, entity.SegmentName) error
 	}
+	EventStorage interface {
+		Create(context.Context, *entity.Event) error
+	}
 	// TODO: maybe move to place, where it is used
 	SegmentUseCase interface {
 		Create(context.Context, entity.SegmentName) error

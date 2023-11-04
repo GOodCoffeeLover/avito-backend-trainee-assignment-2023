@@ -22,16 +22,21 @@ func main() {
 			log.Fatal().Err(err).Msg("failed to drop users table")
 			return err
 		}
+		if err := m.dropEventsTable(ctx); err != nil {
+			log.Fatal().Err(err).Msg("failed to drop events table")
+			return err
+		}
 		if err := m.dropSegmentsTable(ctx); err != nil {
 			log.Fatal().Err(err).Msg("failed to drop segments table")
 			return err
 		}
-		if err := m.createSegmentsTable(ctx); err != nil {
-			log.Fatal().Err(err).Msg("failed to create segments table")
-			return err
-		}
 		if err := m.dropUsersTable(ctx); err != nil {
 			log.Fatal().Err(err).Msg("failed to drop users table")
+			return err
+		}
+
+		if err := m.createSegmentsTable(ctx); err != nil {
+			log.Fatal().Err(err).Msg("failed to create segments table")
 			return err
 		}
 		if err := m.createUsersTable(ctx); err != nil {
@@ -40,6 +45,10 @@ func main() {
 		}
 		if err := m.createAssigmentsTable(ctx); err != nil {
 			log.Fatal().Err(err).Msg("failed to create users table")
+			return err
+		}
+		if err := m.createEventsTable(ctx); err != nil {
+			log.Fatal().Err(err).Msg("failed to create events table")
 			return err
 		}
 		return nil
@@ -113,6 +122,26 @@ func (m migrator) createAssigmentsTable(ctx context.Context) error {
 }
 func (m migrator) dropAssigmentsTable(ctx context.Context) error {
 	query := `DROP TABLE IF EXISTS assignments`
+
+	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
+	m.log.Info().Err(err).Msg(tag.String())
+	return err
+}
+
+func (m migrator) createEventsTable(ctx context.Context) error {
+	query := `CREATE TABLE IF NOT EXISTS events (
+        user_id integer CONSTRAINT uint CHECK (user_id > 0),
+        segment VARCHAR(40),
+		operation VARCHAR(40),
+		timestamp timestamp
+		)`
+
+	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
+	m.log.Info().Err(err).Msg(tag.String())
+	return err
+}
+func (m migrator) dropEventsTable(ctx context.Context) error {
+	query := `DROP TABLE IF EXISTS events`
 
 	tag, err := m.pg.Conn(ctx).Exec(ctx, query)
 	m.log.Info().Err(err).Msg(tag.String())

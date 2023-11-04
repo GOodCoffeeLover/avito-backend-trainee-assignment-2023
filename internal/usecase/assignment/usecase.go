@@ -14,16 +14,18 @@ type UseCase struct {
 	segments    SegmentStorage
 	users       UserStorage
 	assignments AssignmentStorage
-	trxManager  *manager.Manager // for history transactions
+	events      EventsStorage
+	trxManager  *manager.Manager
 	log         zerolog.Logger
 }
 
-func New(segments SegmentStorage, users UserStorage, assignments AssignmentStorage, trxManager *manager.Manager) *UseCase {
+func New(segments SegmentStorage, users UserStorage, assignments AssignmentStorage, events EventsStorage, trxManager *manager.Manager) *UseCase {
 	log := log.Logger.With().Str("level", "usecase").Str("component", "assigments").Logger()
 	return &UseCase{
 		segments:    segments,
 		users:       users,
 		assignments: assignments,
+		events:      events,
 		trxManager:  trxManager,
 		log:         log,
 	}
@@ -60,12 +62,20 @@ func (uc *UseCase) SetToUserByID(ctx context.Context, uid entity.UserID, segment
 		for _, segment := range segments {
 			assignment, err := entity.NewAssignment(uid, segment)
 			if err != nil {
-				return fmt.Errorf("failed to create assignment to segment %v : %w", segment, err)
+				return fmt.Errorf("failed to create assignment user %v to segment %v : %w", uid, segment, err)
 			}
 			if err = uc.assignments.Create(ctx, assignment); err != nil {
-				return fmt.Errorf("failed to save assignment %v: %w", assignment, err)
+				return fmt.Errorf("failed to create assignment %+v: %w", assignment, err)
 			}
 		}
+
+		for _, segment := range segments {
+			event := entity.NewEvent(&uid, &segment, entity.Created)
+			if err = uc.events.Create(ctx, event); err != nil {
+				return fmt.Errorf("failed to create event %+v: %w", event, err)
+			}
+		}
+
 		return nil
 	})
 }
@@ -97,6 +107,13 @@ func (uc *UseCase) UnsetToUserByID(ctx context.Context, uid entity.UserID, segme
 				segs = append(segs, segment)
 			}
 			return fmt.Errorf("%w assignments to segments: %v", entity.ErrNotFound, segs)
+		}
+
+		for _, segment := range segments {
+			event := entity.NewEvent(&uid, &segment, entity.Deleted)
+			if err = uc.events.Create(ctx, event); err != nil {
+				return fmt.Errorf("failed to create event %+v: %w", event, err)
+			}
 		}
 		return nil
 	})

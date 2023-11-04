@@ -30,4 +30,18 @@ var (
 		id:      "id",
 		deleted: "deleted",
 	}
+
+	events = struct {
+		table     string
+		user      string
+		segment   string
+		operation string
+		timestamp string
+	}{
+		table:     "events",
+		user:      "user_id",
+		segment:   "segment",
+		operation: "operation",
+		timestamp: "timestamp",
+	}
 )

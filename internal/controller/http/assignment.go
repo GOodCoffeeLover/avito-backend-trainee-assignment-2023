@@ -31,9 +31,9 @@ func newAssigmentRoutes(assignments assignment.AssigmentUseCase) assignmentRoute
 }
 
 func (ar *assignmentRoutes) getByUser(ctx *gin.Context) {
-	uid, err := strconv.ParseUint(ctx.Param(userIDParam), 10, 32)
+	uid, err := ar.retriveUserID(ctx)
 	if err != nil {
-		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", ErrInvalidArgument, err))
+		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", entity.ErrInvalidArgument, err))
 		return
 	}
 	assignments, err := ar.assignments.ReadByUserID(ctx.Request.Context(), entity.UserID(uid))
@@ -48,12 +48,12 @@ func (ar *assignmentRoutes) getByUser(ctx *gin.Context) {
 func (ar *assignmentRoutes) assignListSegmentsToUser(ctx *gin.Context) {
 	uid, err := ar.retriveUserID(ctx)
 	if err != nil {
-		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", ErrInvalidArgument, err))
+		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", entity.ErrInvalidArgument, err))
 		return
 	}
 	segs, err := ar.retriveSegmentsNames(ctx)
 	if err != nil {
-		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", ErrInvalidArgument, err))
+		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", entity.ErrInvalidArgument, err))
 	}
 
 	err = ar.assignments.SetToUserByID(ctx.Request.Context(), uid, segs)
@@ -67,12 +67,12 @@ func (ar *assignmentRoutes) assignListSegmentsToUser(ctx *gin.Context) {
 func (ar *assignmentRoutes) unassignListSegmentsToUser(ctx *gin.Context) {
 	uid, err := ar.retriveUserID(ctx)
 	if err != nil {
-		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", ErrInvalidArgument, err))
+		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", entity.ErrInvalidArgument, err))
 		return
 	}
 	segs, err := ar.retriveSegmentsNames(ctx)
 	if err != nil {
-		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", ErrInvalidArgument, err))
+		abortWithErrorAnalize(ctx, fmt.Errorf("%w: %w", entity.ErrInvalidArgument, err))
 	}
 
 	err = ar.assignments.UnsetToUserByID(ctx.Request.Context(), uid, segs)

@@ -26,8 +26,8 @@ func NewAssignmentPsql(ctx context.Context, pg *postgres.Postgres) (*AssignmentP
 	go func() {
 		ctx := context.Background()
 		for {
-			<-time.After(60 * time.Second)
-			log.Info().Err(assignments.Prune(ctx)).Msg("Pruning segments")
+			<-time.After(120 * time.Second)
+			log.Info().Err(assignments.Prune(ctx)).Msg("Pruned segments")
 		}
 	}()
 	return assignments, nil

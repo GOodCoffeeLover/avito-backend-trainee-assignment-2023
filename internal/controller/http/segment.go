@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/entity"
-	segment "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/segmnet"
+	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/segment"
 	"github.com/gin-gonic/gin"
 )
 

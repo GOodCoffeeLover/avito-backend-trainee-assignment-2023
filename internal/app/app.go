@@ -9,7 +9,8 @@ import (
 	http_router "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/controller/http"
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/storage"
 	assignment_usecase "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/assignment"
-	segment_usecase "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/segmnet"
+	event_usecase "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/event"
+	segment_usecase "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/segment"
 	user_usecase "github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/usecase/user"
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/pkg/postgres"
 	"github.com/gin-gonic/gin"
@@ -40,11 +41,16 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	}
 	app.onStopActions = append(app.onStopActions, func(ctx context.Context) error { postgres.Close(ctx); return nil })
 
+	eventStorage, err := storage.NewEventPsql(ctx, postgres)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create pg event storage: %w", err)
+	}
+
 	segmentStorage, err := storage.NewSegmentPsql(ctx, postgres)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pg segments storage: %w", err)
 	}
-	segments := segment_usecase.New(segmentStorage, trm)
+	segments := segment_usecase.New(segmentStorage, eventStorage, trm)
 
 	userStorage, err := storage.NewUserPsql(ctx, postgres)
 	if err != nil {
@@ -56,10 +62,11 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pg assignment storage: %w", err)
 	}
-	assignments := assignment_usecase.New(segmentStorage, userStorage, assignmentStorage, trm)
+	assignments := assignment_usecase.New(segmentStorage, userStorage, assignmentStorage, eventStorage, trm)
+	events := event_usecase.New(userStorage, eventStorage, trm)
 
 	handler := gin.New()
-	http_router.NewRouter(handler, segments, users, assignments)
+	http_router.NewRouter(handler, segments, users, assignments, events)
 	app.httpHandler = handler
 	return app, nil
 }

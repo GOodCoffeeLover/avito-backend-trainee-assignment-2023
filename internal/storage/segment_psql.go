@@ -27,8 +27,8 @@ func NewSegmentPsql(ctx context.Context, pg *postgres.Postgres) (*SegmentPsql, e
 	go func() {
 		ctx := context.Background()
 		for {
-			<-time.After(60 * time.Second)
-			log.Info().Err(segments.Prune(ctx)).Msg("Pruning segments")
+			<-time.After(120 * time.Second)
+			log.Info().Err(segments.Prune(ctx)).Msg("Pruned segments")
 		}
 	}()
 	return segments, nil

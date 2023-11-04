@@ -10,12 +10,14 @@ import (
 
 type UseCase struct {
 	segments   SegmentStorage
-	trxManager *manager.Manager // for history transactions
+	events     EventStorage
+	trxManager *manager.Manager
 }
 
-func New(segments SegmentStorage, trxManager *manager.Manager) *UseCase {
+func New(segments SegmentStorage, events EventStorage, trxManager *manager.Manager) *UseCase {
 	return &UseCase{
 		segments:   segments,
+		events:     events,
 		trxManager: trxManager,
 	}
 }
@@ -61,9 +63,15 @@ func (uc *UseCase) ReadAll(ctx context.Context) ([]*entity.Segment, error) {
 }
 
 func (uc *UseCase) Delete(ctx context.Context, segmentName entity.SegmentName) error {
-	err := uc.segments.Delete(ctx, segmentName)
-	if err != nil {
-		return fmt.Errorf("failed to delete segment %v: %w", segmentName, err)
-	}
-	return nil
+	return uc.trxManager.Do(ctx, func(ctx context.Context) error {
+
+		if err := uc.segments.Delete(ctx, segmentName); err != nil {
+			return fmt.Errorf("failed to delete segment %v: %w", segmentName, err)
+		}
+
+		if err := uc.events.Create(ctx, entity.NewEvent(nil, &segmentName, entity.Deleted)); err != nil {
+			return fmt.Errorf("failed to save event of segment %v deletion: %w", segmentName, err)
+		}
+		return nil
+	})
 }

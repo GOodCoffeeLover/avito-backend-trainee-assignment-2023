@@ -27,15 +27,15 @@ func NewUserPsql(ctx context.Context, pg *postgres.Postgres) (*UserPsql, error) 
 	go func() {
 		ctx := context.Background()
 		for {
-			<-time.After(60 * time.Second)
-			log.Info().Err(users.Prune(ctx)).Msg("Pruning users")
+			<-time.After(120 * time.Second)
+			log.Info().Err(users.Prune(ctx)).Msg("Pruned users")
 		}
 	}()
 	return users, nil
 }
 
-func (sps UserPsql) Create(ctx context.Context, user *entity.User) error {
-	query, args, err := sps.pg.Builder().
+func (sp UserPsql) Create(ctx context.Context, user *entity.User) error {
+	query, args, err := sp.pg.Builder().
 		Insert(users.table).
 		Columns(users.id).
 		Values(user.ID).
@@ -55,7 +55,7 @@ func (sps UserPsql) Create(ctx context.Context, user *entity.User) error {
 		return fmt.Errorf("failed to build query: %w", err)
 	}
 
-	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, args...)
+	tag, err := sp.pg.Conn(ctx).Exec(ctx, query, args...)
 
 	if err != nil {
 		return fmt.Errorf("failed create user %+v: %w", user, err)
@@ -66,8 +66,8 @@ func (sps UserPsql) Create(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
-func (sps UserPsql) ReadByID(ctx context.Context, uid entity.UserID) (*entity.User, error) {
-	query, args, err := sps.pg.Builder().
+func (sp UserPsql) ReadByID(ctx context.Context, uid entity.UserID) (*entity.User, error) {
+	query, args, err := sp.pg.Builder().
 		Select(users.id).
 		From(users.table).
 		Where(sql.Eq{
@@ -78,7 +78,7 @@ func (sps UserPsql) ReadByID(ctx context.Context, uid entity.UserID) (*entity.Us
 		return nil, fmt.Errorf("failed to build query: %w", err)
 	}
 
-	row := sps.pg.Conn(ctx).QueryRow(ctx, query, args...)
+	row := sp.pg.Conn(ctx).QueryRow(ctx, query, args...)
 
 	user := &entity.User{}
 	if err := row.Scan(&user.ID); err != nil {
@@ -91,8 +91,8 @@ func (sps UserPsql) ReadByID(ctx context.Context, uid entity.UserID) (*entity.Us
 	}
 	return user, nil
 }
-func (sps UserPsql) ReadAll(ctx context.Context) ([]*entity.User, error) {
-	query, args, err := sps.pg.Builder().
+func (sp UserPsql) ReadAll(ctx context.Context) ([]*entity.User, error) {
+	query, args, err := sp.pg.Builder().
 		Select(users.id).
 		From(users.table).
 		Where(sql.Eq{
@@ -102,7 +102,7 @@ func (sps UserPsql) ReadAll(ctx context.Context) ([]*entity.User, error) {
 		return nil, fmt.Errorf("failed to build query: %w", err)
 	}
 
-	rows, err := sps.pg.Conn(ctx).Query(ctx, query, args...)
+	rows, err := sp.pg.Conn(ctx).Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed read all users: %w", err)
 	}
@@ -118,8 +118,8 @@ func (sps UserPsql) ReadAll(ctx context.Context) ([]*entity.User, error) {
 	return user, nil
 }
 
-func (sps UserPsql) Delete(ctx context.Context, uid entity.UserID) error {
-	query, args, err := sps.pg.Builder().
+func (sp UserPsql) Delete(ctx context.Context, uid entity.UserID) error {
+	query, args, err := sp.pg.Builder().
 		Update(users.table).
 		Set(users.deleted, true).
 		Where(sql.Eq{
@@ -130,7 +130,7 @@ func (sps UserPsql) Delete(ctx context.Context, uid entity.UserID) error {
 		return fmt.Errorf("failed to build query: %w", err)
 	}
 
-	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, args...)
+	tag, err := sp.pg.Conn(ctx).Exec(ctx, query, args...)
 
 	if err != nil {
 		return fmt.Errorf("failed deleting segment %v: %w", uid, err)
@@ -141,8 +141,8 @@ func (sps UserPsql) Delete(ctx context.Context, uid entity.UserID) error {
 	return nil
 }
 
-func (sps UserPsql) Prune(ctx context.Context) error {
-	query, args, err := sps.pg.Builder().
+func (sp UserPsql) Prune(ctx context.Context) error {
+	query, args, err := sp.pg.Builder().
 		Delete(users.table).
 		Where(sql.Eq{
 			users.deleted: true,
@@ -150,7 +150,7 @@ func (sps UserPsql) Prune(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to build query: %w", err)
 	}
-	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, args...)
+	tag, err := sp.pg.Conn(ctx).Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed prune users: %w", err)
 	}

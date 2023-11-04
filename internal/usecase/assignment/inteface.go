@@ -18,6 +18,9 @@ type (
 		Create(context.Context, *entity.Assignment) error
 		Delete(context.Context, *entity.Assignment) error
 	}
+	EventsStorage interface {
+		Create(context.Context, *entity.Event) error
+	}
 	// TODO: maybe move to place, where it is used
 	AssigmentUseCase interface {
 		ReadByUserID(context.Context, entity.UserID) ([]*entity.Assignment, error)

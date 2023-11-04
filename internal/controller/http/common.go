@@ -18,10 +18,6 @@ const (
 	userIDParam      = "user_id"
 )
 
-var (
-	ErrInvalidArgument = errors.New("invalid argument")
-)
-
 func abortWithErrorAnalize(ctx *gin.Context, err error) {
 	status := http.StatusInternalServerError
 	switch {
@@ -29,7 +25,7 @@ func abortWithErrorAnalize(ctx *gin.Context, err error) {
 		status = http.StatusNotFound
 	case errors.Is(err, entity.ErrAlreadyExists):
 		status = http.StatusBadRequest
-	case errors.Is(err, ErrInvalidArgument):
+	case errors.Is(err, entity.ErrInvalidArgument):
 		status = http.StatusBadRequest
 	}
 	ctx.AbortWithStatusJSON(status, errorResponse{err.Error(), status})
