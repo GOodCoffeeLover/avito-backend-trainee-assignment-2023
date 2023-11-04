@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/storage"
+	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/entity"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,11 +25,9 @@ var (
 func abortWithErrorAnalize(ctx *gin.Context, err error) {
 	status := http.StatusInternalServerError
 	switch {
-	// case errors.Is(err, pgx.ErrNoRows):
-	//     status = http.StatusNotFound
-	case errors.Is(err, storage.ErrNotFound):
+	case errors.Is(err, entity.ErrNotFound):
 		status = http.StatusNotFound
-	case errors.Is(err, storage.ErrAlreadyExists):
+	case errors.Is(err, entity.ErrAlreadyExists):
 		status = http.StatusBadRequest
 	case errors.Is(err, ErrInvalidArgument):
 		status = http.StatusBadRequest

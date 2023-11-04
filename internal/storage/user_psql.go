@@ -8,6 +8,7 @@ import (
 
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/entity"
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/pkg/postgres"
+	sql "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
 )
@@ -34,30 +35,56 @@ func NewUserPsql(ctx context.Context, pg *postgres.Postgres) (*UserPsql, error) 
 }
 
 func (sps UserPsql) Create(ctx context.Context, user *entity.User) error {
-	query := `
-    INSERT INTO users (id) VALUES ($1)
-    ON CONFLICT (id) 
-    DO UPDATE 
-        SET deleted=FALSE
-        WHERE users.deleted=TRUE`
-	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, user.ID)
+	query, args, err := sps.pg.Builder().
+		Insert(users.table).
+		Columns(users.id).
+		Values(user.ID).
+		Suffix(fmt.Sprintf(`
+		ON CONFLICT (%v) DO UPDATE 
+		SET %v=?,
+			%v=FALSE
+		WHERE %v.%v=TRUE`,
+			users.id,
+			users.id,
+			users.deleted,
+			users.table, segments.deleted,
+		),
+			user.ID,
+		).ToSql()
+	if err != nil {
+		return fmt.Errorf("failed to build query: %w", err)
+	}
+
+	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, args...)
+
 	if err != nil {
 		return fmt.Errorf("failed create user %+v: %w", user, err)
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("failed create user %+v: %w", user, ErrAlreadyExists)
+		return fmt.Errorf("failed create user %+v: %w", user, entity.ErrAlreadyExists)
 	}
 	return nil
 }
 
 func (sps UserPsql) ReadByID(ctx context.Context, uid entity.UserID) (*entity.User, error) {
-	row := sps.pg.Conn(ctx).QueryRow(ctx, "SELECT id FROM users WHERE id=$1 AND deleted=FALSE", uid)
+	query, args, err := sps.pg.Builder().
+		Select(users.id).
+		From(users.table).
+		Where(sql.Eq{
+			users.id:      uid,
+			users.deleted: false,
+		}).ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+
+	row := sps.pg.Conn(ctx).QueryRow(ctx, query, args...)
 
 	user := &entity.User{}
 	if err := row.Scan(&user.ID); err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
-			return nil, fmt.Errorf("user with id %v not found: %w", uid, ErrNotFound)
+			return nil, fmt.Errorf("user with id %v not found: %w", uid, entity.ErrNotFound)
 		default:
 			return nil, fmt.Errorf("failed read user by id %v: %w", uid, err)
 		}
@@ -65,7 +92,17 @@ func (sps UserPsql) ReadByID(ctx context.Context, uid entity.UserID) (*entity.Us
 	return user, nil
 }
 func (sps UserPsql) ReadAll(ctx context.Context) ([]*entity.User, error) {
-	rows, err := sps.pg.Conn(ctx).Query(ctx, "SELECT id FROM users WHERE deleted=FALSE")
+	query, args, err := sps.pg.Builder().
+		Select(users.id).
+		From(users.table).
+		Where(sql.Eq{
+			users.deleted: false,
+		}).ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+
+	rows, err := sps.pg.Conn(ctx).Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed read all users: %w", err)
 	}
@@ -82,18 +119,38 @@ func (sps UserPsql) ReadAll(ctx context.Context) ([]*entity.User, error) {
 }
 
 func (sps UserPsql) Delete(ctx context.Context, uid entity.UserID) error {
-	tag, err := sps.pg.Conn(ctx).Exec(ctx, "UPDATE users SET deleted=TRUE WHERE id=$1 AND deleted=FALSE", uid)
+	query, args, err := sps.pg.Builder().
+		Update(users.table).
+		Set(users.deleted, true).
+		Where(sql.Eq{
+			users.id:      uid,
+			users.deleted: false,
+		}).ToSql()
+	if err != nil {
+		return fmt.Errorf("failed to build query: %w", err)
+	}
+
+	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, args...)
+
 	if err != nil {
 		return fmt.Errorf("failed deleting segment %v: %w", uid, err)
 	}
 	if tag.RowsAffected() == 0 {
-		return ErrNotFound
+		return entity.ErrNotFound
 	}
 	return nil
 }
 
 func (sps UserPsql) Prune(ctx context.Context) error {
-	tag, err := sps.pg.Conn(ctx).Exec(ctx, "DELETE FROM users WHERE deleted=TRUE")
+	query, args, err := sps.pg.Builder().
+		Delete(users.table).
+		Where(sql.Eq{
+			users.deleted: true,
+		}).ToSql()
+	if err != nil {
+		return fmt.Errorf("failed to build query: %w", err)
+	}
+	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed prune users: %w", err)
 	}

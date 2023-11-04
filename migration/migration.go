@@ -102,9 +102,9 @@ func (m migrator) dropUsersTable(ctx context.Context) error {
 func (m migrator) createAssigmentsTable(ctx context.Context) error {
 	query := `CREATE TABLE IF NOT EXISTS assignments (
         user_id integer REFERENCES users(id) ON DELETE CASCADE,
-		segment_name VARCHAR(40) REFERENCES segments(name) ON DELETE CASCADE,
+        segment_name VARCHAR(40) REFERENCES segments(name) ON DELETE CASCADE,
         deleted bool DEFAULT FALSE, 
-		PRIMARY KEY (user_id,segment_name)
+        PRIMARY KEY (user_id,segment_name)
     )`
 
 	tag, err := m.pg.Conn(ctx).Exec(ctx, query)

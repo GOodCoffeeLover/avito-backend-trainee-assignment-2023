@@ -8,4 +8,5 @@ var (
 	ErrRepeatedSegment        = errors.New("repeated segment")
 	ErrDuplicatedValue        = errors.New("duplicated value")
 	ErrNotFound               = errors.New("not found")
+	ErrAlreadyExists          = errors.New("alredy exists")
 )

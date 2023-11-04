@@ -8,6 +8,7 @@ import (
 
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/internal/entity"
 	"github.com/GOodCoffeeLover/avito-backend-trainee-assignment-2023/pkg/postgres"
+	sql "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
 )
@@ -34,30 +35,53 @@ func NewSegmentPsql(ctx context.Context, pg *postgres.Postgres) (*SegmentPsql, e
 }
 
 func (sps SegmentPsql) Create(ctx context.Context, segment *entity.Segment) error {
-	query := `
-    INSERT INTO segments (name) VALUES ($1)
-    ON CONFLICT (name) 
-    DO UPDATE 
-        SET deleted=FALSE
-        WHERE segments.deleted=TRUE`
-	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, segment.Name)
+	query, args, err := sps.pg.Builder().
+		Insert(segments.table).
+		Columns(segments.name).
+		Values(segment.Name).
+		Suffix(fmt.Sprintf(`
+		ON CONFLICT (%v) DO UPDATE 
+		SET %v=?,
+			%v=FALSE
+		WHERE %v.%v=TRUE`,
+			segments.name,
+			segments.name,
+			segments.deleted,
+			segments.table, segments.deleted,
+		),
+			segment.Name,
+		).ToSql()
+	if err != nil {
+		return fmt.Errorf("failed to build query: %w", err)
+	}
+	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed create segment %+v: %w", segment, err)
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("failed create segment %+v: %w", segment, ErrAlreadyExists)
+		return fmt.Errorf("failed create segment %+v: %w", segment, entity.ErrAlreadyExists)
 	}
 	return nil
 }
 
 func (sps SegmentPsql) ReadByName(ctx context.Context, segmentName entity.SegmentName) (*entity.Segment, error) {
-	row := sps.pg.Conn(ctx).QueryRow(ctx, "SELECT name FROM segments WHERE name=$1 AND deleted=FALSE", segmentName)
+	query, args, err := sps.pg.Builder().
+		Select(segments.name).
+		From(segments.table).
+		Where(sql.Eq{
+			segments.name:    segmentName,
+			segments.deleted: false,
+		}).ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+	row := sps.pg.Conn(ctx).QueryRow(ctx, query, args...)
 
 	segment := &entity.Segment{}
 	if err := row.Scan(&segment.Name); err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
-			return nil, fmt.Errorf("segmnet %v not found: %w", segmentName, ErrNotFound)
+			return nil, fmt.Errorf("segmnet %v %w", segmentName, entity.ErrNotFound)
 		default:
 			return nil, fmt.Errorf("failed scan segment by name %v: %w", segmentName, err)
 		}
@@ -65,7 +89,17 @@ func (sps SegmentPsql) ReadByName(ctx context.Context, segmentName entity.Segmen
 	return segment, nil
 }
 func (sps SegmentPsql) ReadAll(ctx context.Context) ([]*entity.Segment, error) {
-	rows, err := sps.pg.Conn(ctx).Query(ctx, "SELECT name FROM segments WHERE deleted=FALSE")
+	query, args, err := sps.pg.Builder().
+		Select(segments.name).
+		From(segments.table).
+		Where(sql.Eq{
+			segments.deleted: false,
+		}).ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+
+	rows, err := sps.pg.Conn(ctx).Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed read all segments: %w", err)
 	}
@@ -82,18 +116,37 @@ func (sps SegmentPsql) ReadAll(ctx context.Context) ([]*entity.Segment, error) {
 }
 
 func (sps SegmentPsql) Delete(ctx context.Context, segmentName entity.SegmentName) error {
-	tag, err := sps.pg.Conn(ctx).Exec(ctx, "UPDATE segments SET deleted=TRUE WHERE name=$1 AND deleted=FALSE", segmentName)
+	query, args, err := sps.pg.Builder().
+		Update(segments.table).
+		Set(segments.deleted, true).
+		Where(sql.Eq{
+			segments.name:    segmentName,
+			segments.deleted: false,
+		}).ToSql()
+	if err != nil {
+		return fmt.Errorf("failed to build query: %w", err)
+	}
+
+	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed deleting segment %v: %w", segmentName, err)
 	}
 	if tag.RowsAffected() == 0 {
-		return ErrNotFound
+		return entity.ErrNotFound
 	}
 	return nil
 }
 
 func (sps SegmentPsql) Prune(ctx context.Context) error {
-	tag, err := sps.pg.Conn(ctx).Exec(ctx, "DELETE FROM segments WHERE deleted=TRUE")
+	query, args, err := sps.pg.Builder().
+		Delete(segments.table).
+		Where(sql.Eq{
+			segments.deleted: true,
+		}).ToSql()
+	if err != nil {
+		return fmt.Errorf("failed to build query: %w", err)
+	}
+	tag, err := sps.pg.Conn(ctx).Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed prune segments: %w", err)
 	}

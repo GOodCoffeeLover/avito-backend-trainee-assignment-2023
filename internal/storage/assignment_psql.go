@@ -35,14 +35,13 @@ func NewAssignmentPsql(ctx context.Context, pg *postgres.Postgres) (*AssignmentP
 
 func (as AssignmentPsql) ReadByUserID(ctx context.Context, uid entity.UserID) ([]*entity.Assignment, error) {
 	query, args, err := as.pg.Builder().
-		Select(assignmentsTable.userID, assignmentsTable.segmentName).
-		From(assignmentsTable.name).
-		Where(sql.Eq{assignmentsTable.name + "." + assignmentsTable.userID: uid}).
-		Where(sql.Eq{assignmentsTable.name + "." + assignmentsTable.deleted: false}).
+		Select(assignments.userID, assignments.segmentName).
+		From(assignments.table).
+		Where(sql.Eq{assignments.table + "." + assignments.userID: uid}).
+		Where(sql.Eq{assignments.table + "." + assignments.deleted: false}).
 		InnerJoin("( SELECT * FROM users WHERE deleted = FALSE ) AS users ON assignments.user_id = users.id").
 		InnerJoin("( SELECT * FROM segments WHERE deleted = FALSE ) AS segments ON assignments.segment_name = segments.name").
 		ToSql()
-	fmt.Println(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed buled query: %w", err)
 	}
@@ -65,15 +64,16 @@ func (as AssignmentPsql) ReadByUserID(ctx context.Context, uid entity.UserID) ([
 
 func (as AssignmentPsql) Create(ctx context.Context, assignment *entity.Assignment) error {
 	query, args, err := as.pg.Builder().
-		Insert(assignmentsTable.name).
-		Columns(assignmentsTable.userID, assignmentsTable.segmentName).
+		Insert(assignments.table).
+		Columns(assignments.userID, assignments.segmentName).
 		Values(assignment.User, assignment.Segment).
 		Suffix(
 			fmt.Sprintf(
 				`ON CONFLICT (%v, %v) DO UPDATE SET %v = ?, %v = ?, %v = FALSE WHERE %v = TRUE`,
-				assignmentsTable.userID, assignmentsTable.segmentName,
-				assignmentsTable.userID, assignmentsTable.segmentName, assignmentsTable.deleted,
-				fmt.Sprintf("%v.%v", assignmentsTable.name, assignmentsTable.deleted)),
+				assignments.userID, assignments.segmentName,
+				assignments.userID, assignments.segmentName, assignments.deleted,
+				fmt.Sprintf("%v.%v", assignments.table, assignments.deleted),
+			),
 			assignment.User, assignment.Segment,
 		).
 		ToSql()
@@ -85,18 +85,18 @@ func (as AssignmentPsql) Create(ctx context.Context, assignment *entity.Assignme
 		return fmt.Errorf("failed save assignment %v: %w", assignment, err)
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("assigment %w", ErrAlreadyExists)
+		return fmt.Errorf("assigment %w", entity.ErrAlreadyExists)
 	}
 	return nil
 }
 func (as AssignmentPsql) Delete(ctx context.Context, assignment *entity.Assignment) error {
 	query, args, err := as.pg.Builder().
-		Update(assignmentsTable.name).
-		Set(assignmentsTable.deleted, true).
+		Update(assignments.table).
+		Set(assignments.deleted, true).
 		Where(sql.Eq{
-			assignmentsTable.userID:      assignment.User,
-			assignmentsTable.segmentName: assignment.Segment,
-			assignmentsTable.deleted:     false,
+			assignments.userID:      assignment.User,
+			assignments.segmentName: assignment.Segment,
+			assignments.deleted:     false,
 		}).ToSql()
 	if err != nil {
 		return fmt.Errorf("failed buled query: %w", err)
@@ -113,8 +113,8 @@ func (as AssignmentPsql) Delete(ctx context.Context, assignment *entity.Assignme
 
 func (as AssignmentPsql) Prune(ctx context.Context) error {
 	query, args, err := as.pg.Builder().
-		Delete(assignmentsTable.name).
-		Where(sql.Eq{assignmentsTable.deleted: true}).ToSql()
+		Delete(assignments.table).
+		Where(sql.Eq{assignments.deleted: true}).ToSql()
 	if err != nil {
 		return fmt.Errorf("failed buled query: %w", err)
 	}

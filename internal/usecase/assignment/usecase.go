@@ -53,7 +53,7 @@ func (uc *UseCase) SetToUserByID(ctx context.Context, uid entity.UserID, segment
 		}
 		for _, segment := range segments {
 			if _, err = uc.segments.ReadByName(ctx, segment); err != nil {
-				return fmt.Errorf("unknown segment %v %w", segment, entity.ErrNotFound)
+				return fmt.Errorf("unknown segment %v : %w", segment, err)
 			}
 		}
 

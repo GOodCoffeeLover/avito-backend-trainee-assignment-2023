@@ -1,19 +1,33 @@
 package storage
 
-import "errors"
-
 var (
-	ErrAlreadyExists = errors.New("alredy exists")
-	ErrNotFound      = errors.New("not found")
-	assignmentsTable = struct {
-		name        string
+	assignments = struct {
+		table       string
 		userID      string
 		segmentName string
 		deleted     string
 	}{
-		name:        "assignments",
+		table:       "assignments",
 		userID:      "user_id",
 		segmentName: "segment_name",
 		deleted:     "deleted",
+	}
+	segments = struct {
+		table   string
+		name    string
+		deleted string
+	}{
+		table:   "segments",
+		name:    "name",
+		deleted: "deleted",
+	}
+	users = struct {
+		table   string
+		id      string
+		deleted string
+	}{
+		table:   "users",
+		id:      "id",
+		deleted: "deleted",
 	}
 )
