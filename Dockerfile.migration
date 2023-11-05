@@ -1,0 +1,20 @@
+FROM golang:1.20 as base
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+RUN ["go", "mod", "download"]
+
+COPY . ./
+
+ENV CGO_ENABLED=0
+
+RUN  ["go", "build", "-o", "migration", "./cmd/migration/migration.go"]
+
+# ---- 
+FROM scratch
+
+COPY --from=base /app/migration .
+
+CMD ["./migration"]
