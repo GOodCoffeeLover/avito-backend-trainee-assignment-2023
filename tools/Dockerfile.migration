@@ -10,7 +10,7 @@ COPY . ./
 
 ENV CGO_ENABLED=0
 
-RUN  ["go", "build", "-o", "migration", "./cmd/migration/migration.go"]
+RUN  ["go", "build", "-o", "migration", "./tools/migration/migration.go"]
 
 # ---- 
 FROM scratch

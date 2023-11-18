@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  api:
+    image: api
+    build: 
+      context: ..
+      dockerfile: tools/Dockerfile
+    ports: ["7001:7001"]
+    depends_on:
+      - migration
+    
+  migration:
+    image: migration
+    build: 
+      context: ..
+      dockerfile: tools/Dockerfile.migration
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+  
+  postgres:
+    image: postgres
+    ports:
+      - 5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    # dont using volumes because dont need persistency

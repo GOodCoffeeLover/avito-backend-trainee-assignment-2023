@@ -1,4 +1,4 @@
 curl.sh
 *.md
-Dockerfile*
+**/Dockerfile*
 docker-compose.yml
