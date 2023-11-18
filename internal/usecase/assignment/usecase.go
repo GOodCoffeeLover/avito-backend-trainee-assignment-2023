@@ -15,7 +15,7 @@ type UseCase struct {
 	users       UserStorage
 	assignments AssignmentStorage
 	events      EventsStorage
-	trxManager  *manager.Manager
+	trxManager  *manager.Manager // TODO: move to infra layer
 	log         zerolog.Logger
 }
 

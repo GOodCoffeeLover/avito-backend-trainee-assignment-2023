@@ -14,7 +14,7 @@ import (
 type UseCase struct {
 	events     EventStorage
 	users      UserStorage
-	trxManager *manager.Manager
+	trxManager *manager.Manager // TODO: move to infra layer
 	log        zerolog.Logger
 }
 

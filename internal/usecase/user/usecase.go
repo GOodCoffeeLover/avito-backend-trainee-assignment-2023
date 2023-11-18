@@ -10,7 +10,7 @@ import (
 
 type UseCase struct {
 	users      UserStorage
-	trxManager *manager.Manager
+	trxManager *manager.Manager // TODO: move to infra layer
 }
 
 func New(users UserStorage, trxManager *manager.Manager) *UseCase {

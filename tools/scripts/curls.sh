@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-
+set -uex 
+set -o pipefail
 curl -sL -XPOST localhost:7001/v1/user/11 | jq
 curl -sL -XPOST localhost:7001/v1/user/12 | jq
 curl -sL -XPOST localhost:7001/v1/user/13 | jq

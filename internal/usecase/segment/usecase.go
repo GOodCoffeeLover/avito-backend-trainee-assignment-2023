@@ -11,7 +11,7 @@ import (
 type UseCase struct {
 	segments   SegmentStorage
 	events     EventStorage
-	trxManager *manager.Manager
+	trxManager *manager.Manager // TODO: move to infra layer
 }
 
 func New(segments SegmentStorage, events EventStorage, trxManager *manager.Manager) *UseCase {
