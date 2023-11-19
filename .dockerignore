@@ -2,3 +2,5 @@ curl.sh
 *.md
 **/Dockerfile*
 docker-compose.yml
+Makefile
+.helm

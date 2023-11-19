@@ -11,7 +11,13 @@ import (
 
 func main() {
 	ctx := context.Background()
-	pg, trm, err := postgres.New(ctx, config.New().ConnString)
+
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatal().Err(err).Msgf("Failed get config")
+	}
+
+	pg, trm, err := postgres.New(ctx, cfg.ConnString)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect postgres")
 	}

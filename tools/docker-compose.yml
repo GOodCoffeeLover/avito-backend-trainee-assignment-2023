@@ -7,11 +7,15 @@ services:
       context: ..
       dockerfile: tools/Dockerfile
     ports: ["7001:7001"]
+    environment:
+      - POSTGRES_HOST=postgres
     depends_on:
       - migration
     
   migration:
     image: migration
+    environment:
+      - POSTGRES_HOST=postgres
     build: 
       context: ..
       dockerfile: tools/Dockerfile.migration
