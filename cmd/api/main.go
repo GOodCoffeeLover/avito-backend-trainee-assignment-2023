@@ -14,7 +14,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Failed get config")
 	}
-
+	log.Info().Msgf("config: %+v", cfg)
 	app, err := app.New(ctx, cfg)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Failed to init app")

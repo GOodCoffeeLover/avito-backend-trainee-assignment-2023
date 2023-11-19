@@ -1,6 +1,7 @@
 curl.sh
 *.md
 **/Dockerfile*
-docker-compose.yml
+tools/docker-compose.yml
+tools/scripts/*
 Makefile
 .helm

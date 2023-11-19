@@ -20,7 +20,7 @@ func NewRouter(handler *gin.Engine, segments segment.SegmentUseCase, users user.
 	// handler.GET("/swagger/*any", swaggerHandler)
 
 	// K8s probe
-	handler.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusOK) })
+	handler.GET("/ready", func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	// Prometheus metrics
 	handler.GET("/metrics", gin.WrapH(promhttp.Handler()))
