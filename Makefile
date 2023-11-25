@@ -34,7 +34,8 @@ k8s-down:
 k8s-up: setup-kind copy-images-to-kind
 	helm dependency build .helm
 	helm upgrade -i segments-api .helm --namespace segments-api --create-namespace --atomic --debug --set "image.tag=${DOCKER_IMAGE_TAG}" --set "migration.image.tag=${DOCKER_IMAGE_TAG}"
-	echo "to access app run 'curl -sL --resolve segments-api.local:80:$$(docker network inspect kind | jq -r ".[].IPAM.Config[0].Gateway") segments-api.local/v1/user'"
+	echo "\nTo access app on linux run 'curl -sL --resolve segments-api.local:80:$$(docker network inspect kind | jq -r ".[].IPAM.Config[0].Gateway") segments-api.local/v1/user' or 'make k8s-curls'\n"\
+	"Or to run comman inside cluster 'kubectl run wget-users --quiet=true -i --rm --image=busybox --restart=Never -- sh -c \"wget -qO- segments-api.local/v1/user | xargs echo\"'"
 
 setup-kind:
 	(kind get clusters | grep ${KIND_CLUSTER_NAME}) || kind create cluster --name ${KIND_CLUSTER_NAME} --config=./tools/kind-cluster.yml
