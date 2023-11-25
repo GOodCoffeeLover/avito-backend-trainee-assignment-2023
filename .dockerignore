@@ -4,4 +4,4 @@ curl.sh
 tools/docker-compose.yml
 tools/scripts/*
 Makefile
-.helm
+*helm*
