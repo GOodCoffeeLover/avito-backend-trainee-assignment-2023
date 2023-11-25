@@ -23,7 +23,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: migration
-        image: "{{ .Values.migration.image.repository }}"
+        image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag | default "latest" }}"
         imagePullPolicy: {{ .Values.migration.image.pullPolicy }}
         env:
           {{- toYaml .Values.env | nindent 10 }}

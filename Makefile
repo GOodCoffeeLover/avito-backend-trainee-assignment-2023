@@ -2,8 +2,11 @@
 
 DOCKER_API_IMAGE="segments/api"
 DOCKER_MIGRATION_IMAGE="segments/migration"
+DOCKER_IMAGE_TAG="$$(git rev-parse --short HEAD)"
 KIND_CLUSTER_NAME="segments-local"
 
+tag: 
+	echo ${DOCKER_IMAGE_TAG}
 
 docker-compose-up:
 	docker compose -f tools/docker-compose.yml up -d --build
@@ -30,7 +33,7 @@ k8s-down:
 
 k8s-up: setup-kind copy-images-to-kind
 	helm dependency build .helm
-	helm upgrade -i segments-api .helm --namespace segments-api --create-namespace --atomic --debug
+	helm upgrade -i segments-api .helm --namespace segments-api --create-namespace --atomic --debug --set "image.tag=${DOCKER_IMAGE_TAG}" --set "migration.image.tag=${DOCKER_IMAGE_TAG}"
 	echo "to access app run 'curl -sL --resolve segments-api.local:80:$$(docker network inspect kind | jq -r ".[].IPAM.Config[0].Gateway") segments-api.local/v1/user'"
 
 setup-kind:
@@ -38,9 +41,9 @@ setup-kind:
 	/usr/bin/env bash ./tools/scripts/install-ingress.sh
 
 copy-images-to-kind: build-docker-images
-	kind load docker-image ${DOCKER_MIGRATION_IMAGE} ${DOCKER_API_IMAGE} --name ${KIND_CLUSTER_NAME}
+	kind load docker-image "${DOCKER_API_IMAGE}":"${DOCKER_IMAGE_TAG}" "${DOCKER_MIGRATION_IMAGE}":"${DOCKER_IMAGE_TAG}" --name ${KIND_CLUSTER_NAME}
 
 build-docker-images:
-	docker build --tag ${DOCKER_API_IMAGE} --file ./tools/Dockerfile .
-	docker build --tag ${DOCKER_MIGRATION_IMAGE} --file ./tools/Dockerfile.migration .
+	docker build --tag "${DOCKER_API_IMAGE}":"${DOCKER_IMAGE_TAG}" --file ./tools/Dockerfile .
+	docker build --tag "${DOCKER_MIGRATION_IMAGE}":"${DOCKER_IMAGE_TAG}" --file ./tools/Dockerfile.migration .
 
