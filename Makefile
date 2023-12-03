@@ -17,6 +17,7 @@ docker-compose-down:
 local-up:
 	docker start postgres || (docker run --name postgres -e POSTGRES_PASSWORD=postgres -d -p 5432:5432 --rm postgres)
 	while ! (pg_isready --host localhost --port 5432); do sleep 1 ;done
+	go run ./tools/migration/migration.go
 	go run ./cmd/api/main.go
 
 local-down:
@@ -34,11 +35,13 @@ k8s-down:
 k8s-up: setup-kind copy-images-to-kind
 	helm dependency build .helm
 	helm upgrade -i segments-api .helm --namespace segments-api --create-namespace --atomic --debug --set "image.tag=${DOCKER_IMAGE_TAG}" --set "migration.image.tag=${DOCKER_IMAGE_TAG}"
+	kubectl config set-context --current --namespace=segments-api
 	echo "\nTo access app on linux run 'curl -sL --resolve segments-api.local:80:$$(docker network inspect kind | jq -r ".[].IPAM.Config[0].Gateway") segments-api.local/v1/user' or 'make k8s-curls'\n"\
-	"Or to run comman inside cluster 'kubectl run wget-users --quiet=true -i --rm --image=busybox --restart=Never -- sh -c \"wget -qO- segments-api.local/v1/user | xargs echo\"'"
+	"Or to run comman inside cluster 'kubectl run -i --rm --quiet=true wget-users --image=busybox --restart=Never -- sh -c "wget -qO- segments-api.local/v1/user | xargs echo" 2>/dev/null'"
 
 setup-kind:
 	(kind get clusters | grep ${KIND_CLUSTER_NAME}) || kind create cluster --name ${KIND_CLUSTER_NAME} --config=./tools/kind-cluster.yml
+	kubectl config set-context kind-"${KIND_CLUSTER_NAME}" 
 	/usr/bin/env bash ./tools/scripts/install-ingress.sh
 
 copy-images-to-kind: build-docker-images
